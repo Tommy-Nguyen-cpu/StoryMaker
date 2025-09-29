@@ -8,6 +8,11 @@ class HuggingfaceModel(BaseAiModel):
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
 
     def generate_text(self, prompt: str) -> str:
+        print("Tokenizing prompt...")
         inputs = self.tokenizer(prompt, return_tensors="pt")
+
+        print("Generating text...")
         outputs = self.model.generate(**inputs)
+
+        print("Decoding output...")
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)

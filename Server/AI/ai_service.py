@@ -16,10 +16,12 @@ async def startup_event():
     global llmInstance
     llmInstance = HuggingfaceModel("Qwen/Qwen3-4B-Instruct-2507")
     # e.g., connect to DB, preload models, init resources, etc.
+    print("App startup complete.")
 
 @app.post("/create_story", response_model=Dict[str, str])
 def create_story(request : Dict[str, str]):
 
     print("Creating story with request:", request)
     story = llmInstance.generate_text(request['prompt'])
+    print("Generated story:", story)
     return {"story": story}
