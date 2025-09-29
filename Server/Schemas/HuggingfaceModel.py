@@ -5,14 +5,24 @@ class HuggingfaceModel(BaseAiModel):
     def __init__(self, model_name: str):
         super().__init__(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype="auto", device_map="auto")
 
     def generate_text(self, prompt: str) -> str:
+        messages = [
+            {"role": "system", "content": "You are a master storyteller who can create captivating stories."},
+            {"role": "user", "content": prompt}
+        ]
+        text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
         print("Tokenizing prompt...")
-        inputs = self.tokenizer(prompt, return_tensors="pt")
+        inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
 
         print("Generating text...")
         outputs = self.model.generate(**inputs)
 
         print("Decoding output...")
-        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return self.tokenizer.decode(outputs[0].tolist(), skip_special_tokens=True)
