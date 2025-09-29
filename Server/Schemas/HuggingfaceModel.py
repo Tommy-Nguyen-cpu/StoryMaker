@@ -22,7 +22,7 @@ class HuggingfaceModel(BaseAiModel):
         inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
 
         print("Generating text...")
-        outputs = self.model.generate(**inputs)
+        outputs = self.model.generate(**inputs, max_new_tokens=262144)
 
         print("Decoding output...")
-        return self.tokenizer.decode(outputs[0].tolist(), skip_special_tokens=True)
+        return self.tokenizer.decode(outputs[0][len(inputs.input_ids[0]):].tolist(), skip_special_tokens=True)
