@@ -37,16 +37,18 @@ def enhance_story_prompt(request : Dict[str, str]):
 def create_character(request : Dict[str, str]):
     if 'story_description' not in request:
         raise HTTPException(status_code=400, detail="Missing 'story_description' in request body")
+    if "existing_characters" not in request:
+        request["existing_characters"] = "N/A"
 
     print("Creating character with request:", request)
-    instructions = ROLE + ''' Create a character alongside their name, description, gender, and personality so that they fit into the story description provided.
+    instructions = ROLE + ''' Create a character alongside their name, description, gender, and personality so that they fit into the story description provided. Avoid creating characters that already exist in the story. If no characters exist yet, create the first character.
 Your response must be in the format:
 {"name": "<character_name>", "description": "<character_description>", "gender": "<character_gender>", "personality": "<character_personality>" }
 
 You must strictly follow this format without any additional text or explanation.
 '''
 
-    prompt = f"Story Description: {request['story_description']}"
+    prompt = f"Story Description: {request['story_description']}\nExisting Characters: {request['existing_characters']}"
     character = llmInstance.generate_text(prompt, instructions)
     print("Generated character:", character)
     return {"character": character}
@@ -76,4 +78,4 @@ You must strictly follow this format without any additional text or explanation.
     prompt = f"Story Description: {request['story_description']}\nConversation History:{request['conversation_history']}\nCharacter: {request['character']}\nPersonality: {request['personality']}\nUser Prompt: {request['prompt']}"
     enhanced = llmInstance.generate_text(prompt, instructions)
     print("Generated story:", enhanced)
-    return {"enhanced_description": enhanced}
+    return {"character_response": enhanced}
