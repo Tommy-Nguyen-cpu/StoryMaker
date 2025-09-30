@@ -7,9 +7,9 @@ class HuggingfaceModel(BaseAiModel):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype="auto", device_map="auto")
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, instructions: str) -> str:
         messages = [
-            {"role": "system", "content": "You are a master storyteller who can create captivating stories."},
+            {"role": "system", "content": instructions},
             {"role": "user", "content": prompt}
         ]
         text = self.tokenizer.apply_chat_template(
