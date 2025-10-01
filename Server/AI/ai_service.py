@@ -1,9 +1,26 @@
 from fastapi import FastAPI, HTTPException
 from typing import Dict
 import re
+import json
 
 from Server.Schemas.HuggingfaceModel import HuggingfaceModel
 from Server.Schemas.AIModel import BaseAiModel
+
+from pydantic import BaseModel
+from typing import Dict
+
+# Matches your C# 'Character' class
+class CharacterModel(BaseModel):
+    name: str
+    description: str
+    gender: str
+    personality: str
+
+# Matches your C# 'CreateCharacterResponse' class
+class CreateCharacterResponseModel(BaseModel):
+    thinking_content: str
+    # The 'character' field MUST be the nested object model
+    character: CharacterModel
 
 app = FastAPI()
 
@@ -74,7 +91,7 @@ def enhance_story_prompt(request : Dict[str, str]):
     return {"thinking_content": thinking_content,"enhanced_description": enhanced}
 
 
-@app.post("/create_character", response_model=Dict[str, str])
+@app.post("/create_character", response_model=CreateCharacterResponseModel)
 def create_character(request : Dict[str, str]):
     if 'story_description' not in request:
         raise HTTPException(status_code=400, detail="Missing 'story_description' in request body")
@@ -95,7 +112,7 @@ You must strictly follow this format without any additional text or explanation.
     thinking_content, character = clean_ai_response(character)
     print("Generated character:", character)
 
-    return {"thinking_content": thinking_content, "character": character}
+    return {"thinking_content": thinking_content, "character": json.loads(character)}
 
 @app.post("/get_character_talk", response_model=Dict[str, str])
 def get_character_talk(request : Dict[str, str]):
@@ -111,8 +128,7 @@ def get_character_talk(request : Dict[str, str]):
         request["conversation_history"] = "N/A"
 
     print("Creating character talk with request:", request)
-    instructions = f'''
-{ROLE} Based on the user's prompt, character, and story description, create an engaging response that fits the character's personality and the story context. If no characters have spoken yet, start the conversation.
+    instructions = ROLE + ''' Based on the user's prompt, character, and story description, create an engaging response that fits the character's personality and the story context. If no characters have spoken yet, start the conversation.
 Your response must be for the character specified in the request and no other characters.
 Your response must be in the format:
 {"character": "<character_name>", "response": "<character_response>"}
