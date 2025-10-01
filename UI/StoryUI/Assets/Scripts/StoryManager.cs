@@ -17,16 +17,20 @@ public class StoryManager : MonoBehaviour
         apiConfig = ConfigLoader.LoadConfig();
 
         var enhanced = await EnhanceDescription("A story about a robot who really wants to dance.");
+        Debug.Log($"Enhanced description: {enhanced.enhanced_description}\nThinking: {enhanced.thinking_content}");
+
+        var char1 = await CreateCharacter(enhanced.enhanced_description);
+        Debug.Log($"\n\nCreated character {char1.character.name}\nThinking: {char1.thinking_content}");
     }
 
-    async Task<string> EnhanceDescription(string description)
+    async Task<EnhancedStoryDescResponse> EnhanceDescription(string description)
     {
         var payload = new Dictionary<string, string> {{"prompt", description}};
         string json = JsonConvert.SerializeObject(payload);
         try
         {
-            var response = await AiRequestAsync(apiConfig.server_url + Constants.EnhanceDescApi, json);
-            return response["enhanced_description"];
+            var response = await AiRequestAsync<EnhancedStoryDescResponse>(apiConfig.server_url + Constants.EnhanceDescApi, json);
+            return response;
         }
         catch (Exception ex)
         {
@@ -35,7 +39,7 @@ public class StoryManager : MonoBehaviour
         }
     }
 
-    async Task<string> CreateCharacter(string description, string existingCharacters = null)
+    async Task<CreateCharacterResponse> CreateCharacter(string description, string existingCharacters = null)
     {
         var payload = new Dictionary<string, string> { 
             { "story_description", description }
@@ -50,8 +54,8 @@ public class StoryManager : MonoBehaviour
         string json = JsonConvert.SerializeObject(payload);
         try
         {
-            var response = await AiRequestAsync(apiConfig.server_url + Constants.CreateCharacterApi, json);
-            return response["character"];
+            var response = await AiRequestAsync<CreateCharacterResponse>(apiConfig.server_url + Constants.CreateCharacterApi, json);
+            return response;
         }
         catch(Exception ex)
         {
@@ -60,7 +64,7 @@ public class StoryManager : MonoBehaviour
         }
     }
 
-    async Task<string> CreateCharacterResponse(string prompt, string story_description, string character, string personality, string conversationHistory = null)
+    async Task<GetCharacterTalkResponse> CreateCharacterTalk(string prompt, string story_description, string character, string personality, string conversationHistory = null)
     {
         var payload = new Dictionary<string, string> {
             { "prompt", prompt },
@@ -78,8 +82,8 @@ public class StoryManager : MonoBehaviour
         string json = JsonConvert.SerializeObject(payload);
         try
         {
-            var response = await AiRequestAsync(apiConfig.server_url + Constants.CreateCharacterApi, json);
-            return response["character_response"];
+            var response = await AiRequestAsync<GetCharacterTalkResponse>(apiConfig.server_url + Constants.CreateCharacterApi, json);
+            return response;
         }
         catch (Exception e)
         {
@@ -88,16 +92,16 @@ public class StoryManager : MonoBehaviour
         }
     }
 
-    public Task<Dictionary<string, string>> AiRequestAsync(string url, string jsonData)
+    public Task<T> AiRequestAsync<T>(string url, string jsonData)
     {
-        var tcs = new TaskCompletionSource<Dictionary<string, string>>();
+        var tcs = new TaskCompletionSource<T>();
 
         StartCoroutine(AiRequestCoroutine(url, jsonData, tcs));
 
         return tcs.Task;
     }
 
-    private IEnumerator AiRequestCoroutine(string url, string jsonData, TaskCompletionSource<Dictionary<string, string>> tcs)
+    private IEnumerator AiRequestCoroutine<T>(string url, string jsonData, TaskCompletionSource<T> tcs)
     {
         using (var request = new UnityWebRequest(url, "POST"))
         {
@@ -112,7 +116,8 @@ public class StoryManager : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string respText = request.downloadHandler.text;
-                var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(respText);
+                Debug.Log($"Response from Server: {respText}");
+                var dict = JsonConvert.DeserializeObject<T>(respText);
                 tcs.SetResult(dict);
             }
             else
