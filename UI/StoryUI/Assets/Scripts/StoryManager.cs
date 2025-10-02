@@ -4,10 +4,8 @@ using UnityEngine.Networking;
 using System.Text;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using Unity.VisualScripting.FullSerializer;
 using System.Threading.Tasks;
 using System;
-using System.Security.Cryptography;
 
 public class StoryManager : MonoBehaviour
 {
@@ -26,7 +24,7 @@ public class StoryManager : MonoBehaviour
         {
             characters.Add(await CreateCharacter(enhanced.enhanced_description, existingCharacters));
             existingCharacters += $"{characters[i].character.name},";
-            Debug.Log($"\n\nName: {characters[i].character.name}\nGender:{characters[i].character.gender}\nPersonality:{characters[i].character.personality}\nDescription:{characters[i].character.description}\n\nThinking: {characters[i].thinking_content}");
+            Debug.Log($"Name: {characters[i].character.name}\nGender: {characters[i].character.gender}\nPersonality: {characters[i].character.personality}\nDescription: {characters[i].character.description}\n\nThinking: {characters[i].thinking_content}");
         }
 
         var initResponse = await CreateCharacterTalk("", enhanced.enhanced_description, characters[0].character.name, characters[0].character.personality);
@@ -37,7 +35,8 @@ public class StoryManager : MonoBehaviour
         var history = $"{res}";
         for (int i = 1; i < 5; i++)
         {
-            var newResponse = await CreateCharacterTalk("Create a response that matches the characters personality and story.", enhanced.enhanced_description, characters[i].character.name, characters[i].character.personality, history);
+            var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
+            var newResponse = await CreateCharacterTalk("Create a response that matches the characters personality and story.", enhanced.enhanced_description, characters[randCharacterIdx].character.name, characters[randCharacterIdx].character.personality, history);
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
             Debug.Log(newRes);
             history += $"\n{newRes}";
@@ -85,10 +84,10 @@ public class StoryManager : MonoBehaviour
         }
     }
 
-    async Task<GetCharacterTalkResponse> CreateCharacterTalk(string prompt, string story_description, string character, string personality, string conversationHistory = null)
+    async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, string conversationHistory = null)
     {
         var payload = new Dictionary<string, string> {
-            { "prompt", prompt },
+            { "additional_notes", additional_notes },
             {"story_description", story_description },
             {"character", character },
             {"personality", personality }

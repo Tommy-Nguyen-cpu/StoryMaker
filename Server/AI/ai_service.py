@@ -103,8 +103,8 @@ You must strictly follow this format without any additional text or explanation.
 
 @app.post("/get_character_talk", response_model=CharacterTalkResponse)
 def get_character_talk(request : Dict[str, str]):
-    if 'prompt' not in request:
-        raise HTTPException(status_code=400, detail="Missing 'prompt' in request body")
+    if 'additional_notes' not in request:
+        request["additional_notes"] = "N/A"
     if 'character' not in request:
         raise HTTPException(status_code=400, detail="Missing 'character' in request body")
     if 'story_description' not in request:
@@ -115,14 +115,15 @@ def get_character_talk(request : Dict[str, str]):
         request["conversation_history"] = "N/A"
 
     print("Creating character talk with request:", request)
-    instructions = ROLE + ''' Based on the user's prompt, character, and story description, create an engaging response that fits the character's personality and the story context. If no characters have spoken yet, start the conversation.
+    instructions = ROLE + ''' Based on the user's notes, character, and story description, write a natural spoken line of dialogue that fits the character’s personality and the story context. If no characters have spoken yet, start the conversation.
 Your response must be for the character specified in the request and no other characters.
+Your response must not repeat any previous lines of dialogue from the conversation history.
 Your response must be in the format:
 {"character": "<character_name>", "response": "<character_response>"}
 
 You must strictly follow this format without any additional text or explanation.
 '''
-    prompt = f"Story Description: {request['story_description']}\n\nConversation History:{request['conversation_history']}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nUser Prompt: {request['prompt']}"
+    prompt = f"Story Description: {request['story_description']}\n\nConversation History:{request['conversation_history']}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nUser Additional Notes: {request['additional_notes']}"
     character_response = llmInstance.generate_text(prompt, instructions)
 
     thinking_content, character_response = clean_ai_response(character_response)
