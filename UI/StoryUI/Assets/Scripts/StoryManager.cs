@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.FullSerializer;
 using System.Threading.Tasks;
 using System;
+using System.Security.Cryptography;
 
 public class StoryManager : MonoBehaviour
 {
@@ -17,10 +18,30 @@ public class StoryManager : MonoBehaviour
         apiConfig = ConfigLoader.LoadConfig();
 
         var enhanced = await EnhanceDescription("A story about a robot who really wants to dance.");
-        Debug.Log($"Enhanced description: {enhanced.enhanced_description}\nThinking: {enhanced.thinking_content}");
+        Debug.Log($"Enhanced description: {enhanced.enhanced_description}\n\nThinking: {enhanced.thinking_content}");
 
-        var char1 = await CreateCharacter(enhanced.enhanced_description);
-        Debug.Log($"\n\nCreated character {char1.character.name}\nThinking: {char1.thinking_content}");
+        var characters = new List<CreateCharacterResponse>();
+        string existingCharacters = "";
+        for(int i = 0; i < 2; i++)
+        {
+            characters.Add(await CreateCharacter(enhanced.enhanced_description, existingCharacters));
+            existingCharacters += $"{characters[i].character.name},";
+            Debug.Log($"\n\nName: {characters[i].character.name}\nGender:{characters[i].character.gender}\nPersonality:{characters[i].character.personality}\nDescription:{characters[i].character.description}\n\nThinking: {characters[i].thinking_content}");
+        }
+
+        var initResponse = await CreateCharacterTalk("", enhanced.enhanced_description, characters[0].character.name, characters[0].character.personality);
+
+        string res = $"{initResponse.character_response.character}: {initResponse.character_response.response}";
+        Debug.Log(res);
+
+        var history = $"{res}";
+        for (int i = 1; i < 5; i++)
+        {
+            var newResponse = await CreateCharacterTalk("Create a response that matches the characters personality and story.", enhanced.enhanced_description, characters[i].character.name, characters[i].character.personality, history);
+            var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
+            Debug.Log(newRes);
+            history += $"\n{newRes}";
+        }
     }
 
     async Task<EnhancedStoryDescResponse> EnhanceDescription(string description)
@@ -82,7 +103,7 @@ public class StoryManager : MonoBehaviour
         string json = JsonConvert.SerializeObject(payload);
         try
         {
-            var response = await AiRequestAsync<GetCharacterTalkResponse>(apiConfig.server_url + Constants.CreateCharacterApi, json);
+            var response = await AiRequestAsync<GetCharacterTalkResponse>(apiConfig.server_url + Constants.GenerateCharacterResponseApi, json);
             return response;
         }
         catch (Exception e)

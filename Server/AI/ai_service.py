@@ -5,22 +5,9 @@ import json
 
 from Server.Schemas.HuggingfaceModel import HuggingfaceModel
 from Server.Schemas.AIModel import BaseAiModel
+from Server.Responses.CharacterResponses import CreateCharacterResponse, CharacterTalkResponse
 
-from pydantic import BaseModel
 from typing import Dict
-
-# Matches your C# 'Character' class
-class CharacterModel(BaseModel):
-    name: str
-    description: str
-    gender: str
-    personality: str
-
-# Matches your C# 'CreateCharacterResponse' class
-class CreateCharacterResponseModel(BaseModel):
-    thinking_content: str
-    # The 'character' field MUST be the nested object model
-    character: CharacterModel
 
 app = FastAPI()
 
@@ -91,7 +78,7 @@ def enhance_story_prompt(request : Dict[str, str]):
     return {"thinking_content": thinking_content,"enhanced_description": enhanced}
 
 
-@app.post("/create_character", response_model=CreateCharacterResponseModel)
+@app.post("/create_character", response_model=CreateCharacterResponse)
 def create_character(request : Dict[str, str]):
     if 'story_description' not in request:
         raise HTTPException(status_code=400, detail="Missing 'story_description' in request body")
@@ -114,7 +101,7 @@ You must strictly follow this format without any additional text or explanation.
 
     return {"thinking_content": thinking_content, "character": json.loads(character)}
 
-@app.post("/get_character_talk", response_model=Dict[str, str])
+@app.post("/get_character_talk", response_model=CharacterTalkResponse)
 def get_character_talk(request : Dict[str, str]):
     if 'prompt' not in request:
         raise HTTPException(status_code=400, detail="Missing 'prompt' in request body")
@@ -135,9 +122,9 @@ Your response must be in the format:
 
 You must strictly follow this format without any additional text or explanation.
 '''
-    prompt = f"Story Description: {request['story_description']}\nConversation History:{request['conversation_history']}\nCharacter: {request['character']}\nPersonality: {request['personality']}\nUser Prompt: {request['prompt']}"
+    prompt = f"Story Description: {request['story_description']}\n\nConversation History:{request['conversation_history']}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nUser Prompt: {request['prompt']}"
     character_response = llmInstance.generate_text(prompt, instructions)
 
     thinking_content, character_response = clean_ai_response(character_response)
     print("Generated story:", character_response)
-    return {"thinking_content": thinking_content, "character_response": character_response}
+    return {"thinking_content": thinking_content, "character_response": json.loads(character_response)}

@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using System;
 
-public class GetCharacterTalkResponse : MonoBehaviour
+[Serializable]
+public class GetCharacterTalkResponse
 {
     public string thinking_content;
     public CharacterTalk character_response;
