@@ -47,16 +47,8 @@ public class StoryManager : MonoBehaviour
     {
         var payload = new Dictionary<string, string> {{"prompt", description}};
         string json = JsonConvert.SerializeObject(payload);
-        try
-        {
-            var response = await AiRequestAsync<EnhancedStoryDescResponse>(apiConfig.server_url + Constants.EnhanceDescApi, json);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            Debug.Log($"Failed to enhance description: {ex}");
-            return null;
-        }
+        var response = await AiRequestHandler<EnhancedStoryDescResponse>(apiConfig.server_url + Constants.EnhanceDescApi, json);
+        return response;
     }
 
     async Task<CreateCharacterResponse> CreateCharacter(string description, string existingCharacters = null)
@@ -72,16 +64,8 @@ public class StoryManager : MonoBehaviour
         }
 
         string json = JsonConvert.SerializeObject(payload);
-        try
-        {
-            var response = await AiRequestAsync<CreateCharacterResponse>(apiConfig.server_url + Constants.CreateCharacterApi, json);
-            return response;
-        }
-        catch(Exception ex)
-        {
-            Debug.Log($"Failed to create character: {ex}");
-            return null;
-        }
+        var response = await AiRequestHandler<CreateCharacterResponse>(apiConfig.server_url + Constants.CreateCharacterApi, json);
+        return response;
     }
 
     async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, string conversationHistory = null)
@@ -100,33 +84,32 @@ public class StoryManager : MonoBehaviour
         }
 
         string json = JsonConvert.SerializeObject(payload);
-        try
+        var response = await AiRequestHandler<GetCharacterTalkResponse>(apiConfig.server_url + Constants.GenerateCharacterResponseApi, json);
+        return response;
+    }
+
+    public async Task<T> AiRequestHandler<T>(string url, string jsonData)
+    {
+        for (int i = 0; i < Constants.MAX_RETRY; i++)
         {
-            var response = await AiRequestAsync<GetCharacterTalkResponse>(apiConfig.server_url + Constants.GenerateCharacterResponseApi, json);
-            return response;
+            try
+            {
+                return await AiRequestAsync<T>(url, jsonData);
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"(Attempt {i}) API Failed With Error: {e} ");
+            } // If it succeeds, it will break out of the loop, otherwise we will try again.
         }
-        catch (Exception e)
-        {
-            Debug.Log($"Failed to get character response: {e}");
-            return null;
-        }
+
+        return default(T);
     }
 
     public Task<T> AiRequestAsync<T>(string url, string jsonData)
     {
         var tcs = new TaskCompletionSource<T>();
 
-        for (int i = 0; i < Constants.MAX_RETRY; i++)
-        {
-            try
-            {
-                StartCoroutine(AiRequestCoroutine(url, jsonData, tcs));
-                break;
-            }
-            catch (Exception e){
-                Debug.Log($"(Attempt {i}) API Failed With Error: {e} ");
-            } // If it succeeds, it will break out of the loop, otherwise we will try again.
-        }
+        StartCoroutine(AiRequestCoroutine(url, jsonData, tcs));
 
         return tcs.Task;
     }
