@@ -116,7 +116,17 @@ public class StoryManager : MonoBehaviour
     {
         var tcs = new TaskCompletionSource<T>();
 
-        StartCoroutine(AiRequestCoroutine(url, jsonData, tcs));
+        for (int i = 0; i < Constants.MAX_RETRY; i++)
+        {
+            try
+            {
+                StartCoroutine(AiRequestCoroutine(url, jsonData, tcs));
+                break;
+            }
+            catch (Exception e){
+                Debug.Log($"(Attempt {i}) API Failed With Error: {e} ");
+            } // If it succeeds, it will break out of the loop, otherwise we will try again.
+        }
 
         return tcs.Task;
     }

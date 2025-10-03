@@ -115,9 +115,10 @@ def get_character_talk(request : Dict[str, str]):
         request["conversation_history"] = "N/A"
 
     print("Creating character talk with request:", request)
-    instructions = ROLE + ''' Based on the user's notes, character, and story description, write a natural spoken line of dialogue that fits the character’s personality and the story context. If no characters have spoken yet, start the conversation.
+    instructions = ROLE + ''' Based on the user's notes, character, and story description, write a natural spoken line of dialogue representing what the character says aloud that fits the character`s personality and the story context. If no characters have spoken yet, start the conversation.
 Your response must be for the character specified in the request and no other characters.
-Your response must not repeat any previous lines of dialogue from the conversation history.
+Use the entire conversation history as context for what has already been said.
+Do not repeat or rephrase any dialogue from the history. Each response must be unique and progress the conversation naturally.
 Your response must be in the format:
 {"character": "<character_name>", "response": "<character_response>"}
 
