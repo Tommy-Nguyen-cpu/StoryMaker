@@ -39,11 +39,15 @@ public class AiCharacterController : MonoBehaviour
 
     void LateUpdate()
     {
-        RotateNameTag();
+        MoveAndRotateNameTag();
     }
 
-    private void RotateNameTag()
+    private void MoveAndRotateNameTag()
     {
+        // Move x and z, but keep y since we want the name tag to be above the character object.
+        Vector3 worldPos = new Vector3(transform.position.x, nameTagInstance.transform.position.y, transform.position.z);
+        nameTagInstance.transform.position = worldPos;
+
         if (onlyRotateY)
         {
             Vector3 dir = nameTagInstance.transform.position - mainCamera.transform.position;

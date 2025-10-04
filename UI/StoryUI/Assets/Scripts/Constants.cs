@@ -7,4 +7,5 @@ public static class Constants
     public const string ttsApi = "/tts";
 
     public const int MAX_RETRY = 5;
+    public const int MaxConvLength = 10;
 }
