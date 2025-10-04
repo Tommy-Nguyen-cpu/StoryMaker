@@ -16,6 +16,8 @@ public class StoryManager : MonoBehaviour
     {
         apiConfig = ConfigLoader.LoadConfig();
 
+        Debug.Log($"Available voices: {await GetAvailableVoices()}");
+
         var enhanced = await EnhanceDescription("A story about a robot who really wants to dance.");
         Debug.Log($"Enhanced description: {enhanced.enhanced_description}\n\nThinking: {enhanced.thinking_content}");
 
@@ -102,7 +104,7 @@ public class StoryManager : MonoBehaviour
         for (int i = 0; i < Constants.MAX_RETRY; i++)
         {
             string json = JsonConvert.SerializeObject(payload);
-            var response = await AiRequestHandler<GetCharacterTalkResponse>(apiConfig.server_url + Constants.GenerateCharacterResponseApi, json);
+            var response = await AiRequestHandler<GetCharacterTalkResponse>(apiConfig.server_url + Constants.GenerateCharacterResponseApi, json, "GET");
 
             if (response != null && conversationHistory != null && conversationHistory.Contains(response.character_response.response))
             {
@@ -116,13 +118,18 @@ public class StoryManager : MonoBehaviour
         return null;
     }
 
-    public async Task<T> AiRequestHandler<T>(string url, string jsonData)
+    async Task<GetAvailableVoicesResponse> GetAvailableVoices()
+    {
+        return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
+    }
+
+    public async Task<T> AiRequestHandler<T>(string url, string jsonData, string httpMethod = "POST")
     {
         for (int i = 0; i < Constants.MAX_RETRY; i++)
         {
             try
             {
-                return await AiRequestAsync<T>(url, jsonData);
+                return await AiRequestAsync<T>(url, jsonData, httpMethod);
             }
             catch (Exception e)
             {
@@ -133,21 +140,24 @@ public class StoryManager : MonoBehaviour
         return default(T);
     }
 
-    public Task<T> AiRequestAsync<T>(string url, string jsonData)
+    public Task<T> AiRequestAsync<T>(string url, string jsonData, string httpMethod)
     {
         var tcs = new TaskCompletionSource<T>();
 
-        StartCoroutine(AiRequestCoroutine(url, jsonData, tcs));
+        StartCoroutine(AiRequestCoroutine(url, jsonData, tcs, httpMethod));
 
         return tcs.Task;
     }
 
-    private IEnumerator AiRequestCoroutine<T>(string url, string jsonData, TaskCompletionSource<T> tcs)
+    private IEnumerator AiRequestCoroutine<T>(string url, string jsonData, TaskCompletionSource<T> tcs, string httpMethod)
     {
-        using (var request = new UnityWebRequest(url, "POST"))
+        using (var request = new UnityWebRequest(url, httpMethod))
         {
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            if (!string.IsNullOrEmpty(jsonData))
+            {
+                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
+                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            }
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             request.SetRequestHeader("Accept", "application/json");
@@ -167,5 +177,4 @@ public class StoryManager : MonoBehaviour
             }
         }
     }
-
 }

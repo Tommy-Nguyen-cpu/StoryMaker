@@ -4,8 +4,10 @@ import re
 import json
 
 from Server.Schemas.HuggingfaceModel import HuggingfaceModel
+from Server.Schemas.TTSModel import KittenTTSModel
 from Server.Schemas.AIModel import BaseAiModel
 from Server.Responses.CharacterResponses import CreateCharacterResponse, CharacterTalkResponse
+from Server.Responses.TTSResponses import GetAvailableVoicesResponse
 
 from typing import Dict
 
@@ -13,6 +15,7 @@ app = FastAPI()
 
 # AI Models
 llmInstance : BaseAiModel = None
+ttsInstance : BaseAiModel = None
 
 # Constants
 ROLE = "You are a creative and imaginative story writer."
@@ -56,8 +59,14 @@ def clean_ai_response(response: str) -> str:
 async def startup_event():
     # Code here runs once at startup
     print("App is starting up...")
+    print("Loading llm model...")
     global llmInstance
     llmInstance = HuggingfaceModel("Qwen/Qwen3-0.6B")
+
+    print("Loading tts model...")
+    global ttsInstance
+    ttsInstance = KittenTTSModel("KittenML/kitten-tts-nano-0.2")
+
     # e.g., connect to DB, preload models, init resources, etc.
     print("App startup complete.")
 
@@ -101,7 +110,7 @@ You must strictly follow this format without any additional text or explanation.
 
     return {"thinking_content": thinking_content, "character": json.loads(character)}
 
-@app.post("/get_character_talk", response_model=CharacterTalkResponse)
+@app.get("/get_character_talk", response_model=CharacterTalkResponse)
 def get_character_talk(request : Dict[str, str]):
     if 'additional_notes' not in request:
         request["additional_notes"] = "N/A"
@@ -130,3 +139,12 @@ You must strictly follow this format without any additional text or explanation.
     thinking_content, character_response = clean_ai_response(character_response)
     print("Generated story:", character_response)
     return {"thinking_content": thinking_content, "character_response": json.loads(character_response)}
+
+@app.get("/get_available_voices", response_model=GetAvailableVoicesResponse)
+def get_available_voices():
+    print("Fetching available voices...")
+    voices = ttsInstance.get_available_voices()
+    male = [v for v in voices if v.endswith('-m')]
+    female = [v for v in voices if v.endswith('-f')]
+
+    return GetAvailableVoicesResponse(male_voices=male, female_voices=female)
