@@ -1,85 +1,46 @@
-using UnityEngine;
-using UnityEngine.Networking;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.Networking;
 
-public class StoryManager : MonoBehaviour
+public class ApiManager : MonoBehaviour
 {
+    #region Fields
     public AudioSource audioSource;
     Config apiConfig;
-
-    #region Fields
     BasicApiHandler apiHandler;
     MultiMediaApiHandler multiMediaApiHandler;
     #endregion
 
-    async void Start()
+    public void Awake()
     {
+        apiConfig = ConfigLoader.LoadConfig();
         apiHandler = BasicApiHandler.Instance;
         multiMediaApiHandler = MultiMediaApiHandler.Instance;
-
-        apiConfig = ConfigLoader.LoadConfig();
-
-        var availableVoices = await GetAvailableVoices();
-
-        if(availableVoices != null && availableVoices.male_voices.Count > 0)
-        {
-            PlayTTS("Hello world! This is a text to speak generation from a python API!", availableVoices.male_voices[0]);
-        }
-
-        test();
-    }
-
-    async void test()
-    {
-        var enhanced = await EnhanceDescription("A story about a robot who really wants to dance.");
-        Debug.Log($"Enhanced description: {enhanced.enhanced_description}\n\nThinking: {enhanced.thinking_content}");
-
-        var characters = new List<CreateCharacterResponse>();
-        HashSet<string> charactersSet = new HashSet<string>();
-        for (int i = 0; i < 2; i++)
-        {
-            characters.Add(await CreateCharacter(enhanced.enhanced_description, charactersSet));
-            charactersSet.Add(characters[i].character.name);
-            Debug.Log($"Name: {characters[i].character.name}\nGender: {characters[i].character.gender}\nPersonality: {characters[i].character.personality}\nDescription: {characters[i].character.description}\n\nThinking: {characters[i].thinking_content}");
-        }
-
-        var initResponse = await CreateCharacterTalk("", enhanced.enhanced_description, characters[0].character.name, characters[0].character.personality);
-
-        string res = $"{initResponse.character_response.character}: {initResponse.character_response.response}";
-        Debug.Log(res);
-
-        var history = new HashSet<string>();
-        history.Add(res);
-        for (int i = 1; i < 5; i++)
-        {
-            var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
-            var newResponse = await CreateCharacterTalk("Create a response that matches the characters personality and story.", enhanced.enhanced_description, characters[randCharacterIdx].character.name, characters[randCharacterIdx].character.personality, history);
-            var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
-            Debug.Log(newRes);
-            history.Add(newRes);
-        }
     }
 
     #region LLM Methods
-    async Task<EnhancedStoryDescResponse> EnhanceDescription(string description)
+    public async Task<EnhancedStoryDescResponse> EnhanceDescription(string description)
     {
-        var payload = new Dictionary<string, string> {{"prompt", description}};
+        var payload = new Dictionary<string, string> { { "prompt", description } };
         string json = JsonConvert.SerializeObject(payload);
         var response = await AiRequestHandler<EnhancedStoryDescResponse>(apiConfig.server_url + Constants.EnhanceDescApi, json);
         return response;
     }
 
-    async Task<CreateCharacterResponse> CreateCharacter(string description, HashSet<string> existingCharacters = null)
+    public async Task<CreateCharacterResponse> CreateCharacter(string description, HashSet<string> existingCharacters = null)
     {
-        var payload = new Dictionary<string, string> { 
+        var payload = new Dictionary<string, string> {
             { "story_description", description }
         };
-        
-        if(existingCharacters != null && existingCharacters.Count > 0)
+
+        if (existingCharacters != null && existingCharacters.Count > 0)
         {
             var existingCharactersString = string.Join(",", existingCharacters.ToArray());
             payload["existing_characters"] = existingCharactersString;
@@ -90,7 +51,7 @@ public class StoryManager : MonoBehaviour
             string json = JsonConvert.SerializeObject(payload);
             var response = await AiRequestHandler<CreateCharacterResponse>(apiConfig.server_url + Constants.CreateCharacterApi, json);
 
-            if(response != null && existingCharacters != null && existingCharacters.Contains(response.character.name))
+            if (response != null && existingCharacters != null && existingCharacters.Contains(response.character.name))
             {
                 Debug.Log($"(Attempt {i}) AI generated existing character. Generating again...");
                 continue;
@@ -102,7 +63,7 @@ public class StoryManager : MonoBehaviour
         return null;
     }
 
-    async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, HashSet<string> conversationHistory = null)
+    public async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, HashSet<string> conversationHistory = null)
     {
         var payload = new Dictionary<string, string> {
             { "additional_notes", additional_notes },
@@ -138,7 +99,7 @@ public class StoryManager : MonoBehaviour
     #endregion
 
     #region TTS Methods
-    async Task<GetAvailableVoicesResponse> GetAvailableVoices()
+    public async Task<GetAvailableVoicesResponse> GetAvailableVoices()
     {
         return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
     }
@@ -166,7 +127,6 @@ public class StoryManager : MonoBehaviour
                 Debug.Log($"(Attempt {i}) API Failed With Error: {e} ");
             } // If it succeeds, it will break out of the loop, otherwise we will try again.
         }
-
         return default(T);
     }
 
