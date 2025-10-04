@@ -1,21 +1,26 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Text;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
-using UnityEngine.Audio;
 
 public class StoryManager : MonoBehaviour
 {
     public AudioSource audioSource;
     Config apiConfig;
 
+    #region Fields
+    BasicApiHandler apiHandler;
+    MultiMediaApiHandler multiMediaApiHandler;
+    #endregion
+
     async void Start()
     {
+        apiHandler = BasicApiHandler.Instance;
+        multiMediaApiHandler = MultiMediaApiHandler.Instance;
+
         apiConfig = ConfigLoader.LoadConfig();
 
         var availableVoices = await GetAvailableVoices();
@@ -25,6 +30,7 @@ public class StoryManager : MonoBehaviour
             PlayTTS("Hello world! This is a text to speak generation from a python API!", availableVoices.male_voices[0]);
         }
 
+        test();
     }
 
     async void test()
@@ -58,6 +64,7 @@ public class StoryManager : MonoBehaviour
         }
     }
 
+    #region LLM Methods
     async Task<EnhancedStoryDescResponse> EnhanceDescription(string description)
     {
         var payload = new Dictionary<string, string> {{"prompt", description}};
@@ -128,7 +135,9 @@ public class StoryManager : MonoBehaviour
 
         return null;
     }
+    #endregion
 
+    #region TTS Methods
     async Task<GetAvailableVoicesResponse> GetAvailableVoices()
     {
         return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
@@ -138,8 +147,11 @@ public class StoryManager : MonoBehaviour
     {
         // Build the URL, e.g. encode text & voice
         string url = $"{apiConfig.server_url}{Constants.ttsApi}?text={UnityWebRequest.EscapeURL(text)}&voice={voice}";
-        StartCoroutine(PlayFromUrl(url));
+        StartCoroutine(multiMediaApiHandler.PlayFromUrl(url, audioSource));
     }
+    #endregion
+
+    #region Helper Methods
 
     public async Task<T> AiRequestHandler<T>(string url, string jsonData, string httpMethod = "POST")
     {
@@ -162,60 +174,9 @@ public class StoryManager : MonoBehaviour
     {
         var tcs = new TaskCompletionSource<T>();
 
-        StartCoroutine(AiRequestCoroutine(url, jsonData, tcs, httpMethod));
+        StartCoroutine(apiHandler.AiRequestCoroutine(url, jsonData, tcs, httpMethod));
 
         return tcs.Task;
     }
-
-    public IEnumerator PlayFromUrl(string url)
-    {
-        using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.WAV))
-        {
-            // Enable streaming if supported
-            DownloadHandlerAudioClip dh = (DownloadHandlerAudioClip)www.downloadHandler;
-            dh.streamAudio = true;
-
-            yield return www.SendWebRequest();
-
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError("Audio download error: " + www.error);
-            }
-            else
-            {
-                AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
-                audioSource.clip = clip;
-                audioSource.Play();
-            }
-        }
-    }
-
-    private IEnumerator AiRequestCoroutine<T>(string url, string jsonData, TaskCompletionSource<T> tcs, string httpMethod)
-    {
-        using (var request = new UnityWebRequest(url, httpMethod))
-        {
-            if (!string.IsNullOrEmpty(jsonData))
-            {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            }
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("Accept", "application/json");
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                string respText = request.downloadHandler.text;
-                Debug.Log($"Response from Server: {respText}");
-                var dict = JsonConvert.DeserializeObject<T>(respText);
-                tcs.SetResult(dict);
-            }
-            else
-            {
-                tcs.SetException(new Exception(request.error));
-            }
-        }
-    }
+    #endregion
 }
