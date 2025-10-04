@@ -6,7 +6,6 @@ public class StoryManager : MonoBehaviour
     public ApiManager apiManager;
     async void Start()
     {
-
         var availableVoices = await apiManager.GetAvailableVoices();
 
         if(availableVoices != null && availableVoices.male_voices.Count > 0)
@@ -19,7 +18,7 @@ public class StoryManager : MonoBehaviour
 
     async void test()
     {
-        var enhanced = await apiManager.EnhanceDescription("A story about a robot who really wants to dance.");
+        var enhanced = await apiManager.EnhanceDescription("A short story about a crow that learned how to swear.");
         Debug.Log($"Enhanced description: {enhanced.enhanced_description}\n\nThinking: {enhanced.thinking_content}");
 
         var characters = new List<CreateCharacterResponse>();
@@ -33,7 +32,7 @@ public class StoryManager : MonoBehaviour
 
         var initResponse = await apiManager.CreateCharacterTalk("", enhanced.enhanced_description, characters[0].character.name, characters[0].character.personality);
 
-        string res = $"{initResponse.character_response.character}: {initResponse.character_response.response}";
+        string res = $"{initResponse.character_response.character}: {initResponse.character_response.response}\nAction: {initResponse.character_response.action}";
         Debug.Log(res);
 
         var history = new HashSet<string>();
@@ -42,7 +41,7 @@ public class StoryManager : MonoBehaviour
         {
             var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
             var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", enhanced.enhanced_description, characters[randCharacterIdx].character.name, characters[randCharacterIdx].character.personality, history);
-            var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
+            var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}\nAction: {newResponse.character_response.action}";
             Debug.Log(newRes);
             history.Add(newRes);
         }

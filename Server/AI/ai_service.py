@@ -122,6 +122,8 @@ def get_character_talk(request : Dict[str, str]):
         raise HTTPException(status_code=400, detail="Missing 'story_description' in request body")
     if "personality" not in request:
         request["personality"] = "N/A"
+    if "available_actions" not in request:
+        request["available_actions"] = "N/A"
     if "conversation_history" not in request:
         request["conversation_history"] = "N/A"
 
@@ -130,12 +132,17 @@ def get_character_talk(request : Dict[str, str]):
 Your response must be for the character specified in the request and no other characters.
 Use the entire conversation history as context for what has already been said.
 Do not repeat or rephrase any dialogue from the history. Each response must be unique and progress the conversation naturally.
+If the character takes an action, include it in the "action" field. If no action is taken, leave the "action" field empty. Only include actions available in the "Available Actions" section.
 Your response must be in the format:
-{"character": "<character_name>", "response": "<character_response>"}
+{"character": "<character_name>", "response": "<character_response>", "action": "<character_action>" }
 
 You must strictly follow this format without any additional text or explanation.
+
+For example:
+if "Available Actions" is "turn left, turn right, walk straight, smile brightly",
+{"character": "Alice", "response": "I can't believe we made it this far!", "action": "smiles brightly"}
 '''
-    prompt = f"Story Description: {request['story_description']}\n\nConversation History:{request['conversation_history']}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nUser Additional Notes: {request['additional_notes']}"
+    prompt = f"Story Description: {request['story_description']}\n\nConversation History:{request['conversation_history']}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nAvailable Actions: {request['available_actions']}\n\nUser Additional Notes: {request['additional_notes']}"
     character_response = llmInstance.generate_text(prompt, instructions)
 
     thinking_content, character_response = clean_ai_response(character_response)

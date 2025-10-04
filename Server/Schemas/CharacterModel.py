@@ -10,3 +10,4 @@ class CharacterModel(BaseModel):
 class CharacterTalk(BaseModel):
     character: str
     response: str
+    action: str
