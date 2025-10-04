@@ -1,15 +1,17 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from typing import Dict
 import re
 import json
+import io
+import wave
+import numpy as np
 
 from Server.Schemas.HuggingfaceModel import HuggingfaceModel
 from Server.Schemas.TTSModel import KittenTTSModel
 from Server.Schemas.AIModel import BaseAiModel
 from Server.Responses.CharacterResponses import CreateCharacterResponse, CharacterTalkResponse
 from Server.Responses.TTSResponses import GetAvailableVoicesResponse
-
-from typing import Dict
 
 app = FastAPI()
 
@@ -148,3 +150,25 @@ def get_available_voices():
     female = [v for v in voices if v.endswith('-f')]
 
     return GetAvailableVoicesResponse(male_voices=male, female_voices=female)
+
+@app.get("/tts")
+async def tts_endpoint(text: str, voice: str = "expr-voice-2-f"):
+    audio = ttsInstance.generate_audio(text, voice=voice)
+
+    # Convert float32 audio in [-1, +1] to int16 PCM
+    # Clip just in case
+    arr = np.asarray(audio, dtype=np.float32)
+    arr = np.clip(arr, -1.0, 1.0)
+    # Scale to int16 range
+    pcm = (arr * 32767.0).astype(np.int16)
+
+    buf = io.BytesIO()
+    with wave.open(buf, mode="wb") as wf:
+        wf.setnchannels(1)                # mono
+        wf.setsampwidth(2)               # 2 bytes = 16 bits
+        wf.setframerate(24000)           # **important**: match 24000 Hz
+        wf.writeframes(pcm.tobytes())
+    buf.seek(0)
+
+    return StreamingResponse(buf, media_type="audio/wav")
+

@@ -7,23 +7,34 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
+using UnityEngine.Audio;
 
 public class StoryManager : MonoBehaviour
 {
+    public AudioSource audioSource;
     Config apiConfig;
 
     async void Start()
     {
         apiConfig = ConfigLoader.LoadConfig();
 
-        Debug.Log($"Available voices: {await GetAvailableVoices()}");
+        var availableVoices = await GetAvailableVoices();
 
+        if(availableVoices != null && availableVoices.male_voices.Count > 0)
+        {
+            PlayTTS("Hello world! This is a text to speak generation from a python API!", availableVoices.male_voices[0]);
+        }
+
+    }
+
+    async void test()
+    {
         var enhanced = await EnhanceDescription("A story about a robot who really wants to dance.");
         Debug.Log($"Enhanced description: {enhanced.enhanced_description}\n\nThinking: {enhanced.thinking_content}");
 
         var characters = new List<CreateCharacterResponse>();
         HashSet<string> charactersSet = new HashSet<string>();
-        for(int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++)
         {
             characters.Add(await CreateCharacter(enhanced.enhanced_description, charactersSet));
             charactersSet.Add(characters[i].character.name);
@@ -123,6 +134,13 @@ public class StoryManager : MonoBehaviour
         return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
     }
 
+    public void PlayTTS(string text, string voice)
+    {
+        // Build the URL, e.g. encode text & voice
+        string url = $"{apiConfig.server_url}{Constants.ttsApi}?text={UnityWebRequest.EscapeURL(text)}&voice={voice}";
+        StartCoroutine(PlayFromUrl(url));
+    }
+
     public async Task<T> AiRequestHandler<T>(string url, string jsonData, string httpMethod = "POST")
     {
         for (int i = 0; i < Constants.MAX_RETRY; i++)
@@ -147,6 +165,29 @@ public class StoryManager : MonoBehaviour
         StartCoroutine(AiRequestCoroutine(url, jsonData, tcs, httpMethod));
 
         return tcs.Task;
+    }
+
+    public IEnumerator PlayFromUrl(string url)
+    {
+        using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.WAV))
+        {
+            // Enable streaming if supported
+            DownloadHandlerAudioClip dh = (DownloadHandlerAudioClip)www.downloadHandler;
+            dh.streamAudio = true;
+
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Audio download error: " + www.error);
+            }
+            else
+            {
+                AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
+                audioSource.clip = clip;
+                audioSource.Play();
+            }
+        }
     }
 
     private IEnumerator AiRequestCoroutine<T>(string url, string jsonData, TaskCompletionSource<T> tcs, string httpMethod)
