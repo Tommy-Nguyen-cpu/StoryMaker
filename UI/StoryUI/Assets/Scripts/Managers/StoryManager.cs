@@ -1,19 +1,32 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class StoryManager : MonoBehaviour
 {
     public ApiManager apiManager;
+
+    #region Input Prompt UIs
+    [SerializeField]
+    GameObject inputPanel;
+
+    [SerializeField]
+    TMP_InputField promptInputField;
+
+    [SerializeField]
+    TMP_Text loadingTextInfo;
+    #endregion
+
     async void Start()
     {
         var availableVoices = await apiManager.GetAvailableVoices();
 
-        if(availableVoices != null && availableVoices.male_voices.Count > 0)
+        /*if(availableVoices != null && availableVoices.male_voices.Count > 0)
         {
             apiManager.PlayTTS("Hello world! This is a text to speak generation from a python API!", availableVoices.male_voices[0]);
         }
 
-        test();
+        test();*/
     }
 
     async void test()
@@ -45,5 +58,12 @@ public class StoryManager : MonoBehaviour
             Debug.Log(newRes);
             history.Add(newRes);
         }
+    }
+
+    public void OnEndEditHandler()
+    {
+        Debug.Log($"Recived input: {promptInputField.text}");
+
+        inputPanel.SetActive(false); // Disable UI, since we are now playing the story.
     }
 }
