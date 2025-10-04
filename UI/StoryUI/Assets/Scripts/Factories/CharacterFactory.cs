@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class CharacterFactory
 {
-    public static GameObject CreateCharacter(Color color, Vector3 position, Vector3 scale)
+    public static GameObject CreatePrimitiveCharacter(Color color, Vector3 position, Vector3 scale)
     {
         GameObject cyl = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         cyl.transform.position = position;
@@ -21,6 +21,8 @@ public static class CharacterFactory
             rend.material = mat;
         }
 
+        // Add necessary components to AI asset.
+        cyl.AddComponent<AiCharacterController>();
         cyl.AddComponent<AudioSource>();
 
         return cyl;
