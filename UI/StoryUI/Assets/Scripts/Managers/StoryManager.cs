@@ -4,6 +4,7 @@ using TMPro;
 using System.Security.Cryptography;
 using UnityEngine.TextCore.Text;
 using System;
+using System.Threading.Tasks;
 
 public class StoryManager : MonoBehaviour
 {
@@ -35,33 +36,32 @@ public class StoryManager : MonoBehaviour
         test();*/
     }
 
-    string EnhanceStoryPrompt(string prompt)
+    async Task<string> EnhanceStoryPrompt(string prompt)
     {
         if (enhancePrompt)
         {
-            var enhancePromptResponse = apiManager.EnhanceDescription(prompt);
-            return enhancePromptResponse.Result.enhanced_description;
+            var enhancePromptResponse = await apiManager.EnhanceDescription(prompt);
+            return enhancePromptResponse.enhanced_description;
         }
 
         return prompt;
     }
 
-    List<Character> CreateUniqueCharacters(string storyPrompt, out HashSet<string> uniqueChars)
+    async Task<List<Character>> CreateUniqueCharacters(string storyPrompt)
     {
         var characters = new List<Character>();
         HashSet<string> charactersSet = new HashSet<string>();
         for (int i = 0; i < 2; i++)
         {
-            characters.Add(apiManager.CreateCharacter(storyPrompt, charactersSet).Result.character);
+            characters.Add((await apiManager.CreateCharacter(storyPrompt, charactersSet)).character);
             charactersSet.Add(characters[i].name);
             Debug.Log($"Name: {characters[i].name}\nGender: {characters[i].gender}\nPersonality: {characters[i].personality}\nDescription: {characters[i].description}");
         }
 
-        uniqueChars = charactersSet;
         return characters;
     }
 
-    HashSet<string> GetCharacterConversations(List<Character> characters, string storyDescription)
+    async Task<HashSet<string>> GetCharacterConversations(List<Character> characters, string storyDescription)
     {
         var history = new HashSet<string>();
 
@@ -69,7 +69,7 @@ public class StoryManager : MonoBehaviour
         for (int i = 0; i < conversationLength; i++)
         {
             var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
-            var newResponse = apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, characters[randCharacterIdx].name, characters[randCharacterIdx].personality, history).Result;
+            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, characters[randCharacterIdx].name, characters[randCharacterIdx].personality, history);
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}\nAction: {newResponse.character_response.action}";
             Debug.Log(newRes);
             history.Add(newRes);
@@ -78,21 +78,21 @@ public class StoryManager : MonoBehaviour
         return history;
     }
 
-    void GenerateStory(string prompt)
+    async void GenerateStory(string prompt)
     {
         try
         {
             loadingTextInfo.text = "Enhancing Prompt if requested...";
-            var storyPrompt = EnhanceStoryPrompt(prompt);
+            var storyPrompt = await EnhanceStoryPrompt(prompt);
 
             loadingTextInfo.text = "Creating unique characters...";
-            var characters = CreateUniqueCharacters(storyPrompt, out var uniqueChars);
+            var characters = await CreateUniqueCharacters(storyPrompt);
 
             loadingTextInfo.text = "Creating character conversations...";
-            var conversationHistory = GetCharacterConversations(characters, storyPrompt);
+            var conversationHistory = await GetCharacterConversations(characters, storyPrompt);
             loadingTextInfo.gameObject.SetActive(false);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             loadingTextInfo.text = "Generation failed, please try again!: " + e.Message;
             inputPanel.SetActive(true);

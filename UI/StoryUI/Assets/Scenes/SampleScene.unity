@@ -352,7 +352,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   apiManager: {fileID: 873865241}
-  inputPanel: {fileID: 0}
+  inputPanel: {fileID: 513561144}
   promptInputField: {fileID: 1601204096}
   loadingTextInfo: {fileID: 1825956713}
 --- !u!1 &513561144
@@ -1742,7 +1742,7 @@ MonoBehaviour:
   m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
