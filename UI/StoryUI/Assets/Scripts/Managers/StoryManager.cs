@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using System.Security.Cryptography;
 using UnityEngine.TextCore.Text;
+using System;
 
 public class StoryManager : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class StoryManager : MonoBehaviour
         test();*/
     }
 
-    string CreateStoryPrompt(string prompt)
+    string EnhanceStoryPrompt(string prompt)
     {
         if (enhancePrompt)
         {
@@ -56,7 +57,7 @@ public class StoryManager : MonoBehaviour
             Debug.Log($"Name: {characters[i].name}\nGender: {characters[i].gender}\nPersonality: {characters[i].personality}\nDescription: {characters[i].description}");
         }
 
-        uniqueChars= charactersSet;
+        uniqueChars = charactersSet;
         return characters;
     }
 
@@ -64,10 +65,10 @@ public class StoryManager : MonoBehaviour
     {
         var history = new HashSet<string>();
 
-        var conversationLength = Random.Range(0, Constants.MaxConvLength);
+        var conversationLength = UnityEngine.Random.Range(0, Constants.MaxConvLength);
         for (int i = 0; i < conversationLength; i++)
         {
-            var randCharacterIdx = Random.Range(0, characters.Count);
+            var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
             var newResponse = apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, characters[randCharacterIdx].name, characters[randCharacterIdx].personality, history).Result;
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}\nAction: {newResponse.character_response.action}";
             Debug.Log(newRes);
@@ -79,11 +80,23 @@ public class StoryManager : MonoBehaviour
 
     void GenerateStory(string prompt)
     {
-        var storyPrompt = CreateStoryPrompt(prompt);
+        try
+        {
+            loadingTextInfo.text = "Enhancing Prompt if requested...";
+            var storyPrompt = EnhanceStoryPrompt(prompt);
 
-        var characters = CreateUniqueCharacters(storyPrompt, out var uniqueChars);
+            loadingTextInfo.text = "Creating unique characters...";
+            var characters = CreateUniqueCharacters(storyPrompt, out var uniqueChars);
 
-        var conversationHistory = GetCharacterConversations(characters, storyPrompt);
+            loadingTextInfo.text = "Creating character conversations...";
+            var conversationHistory = GetCharacterConversations(characters, storyPrompt);
+            loadingTextInfo.gameObject.SetActive(false);
+        }
+        catch(Exception e)
+        {
+            loadingTextInfo.text = "Generation failed, please try again!: " + e.Message;
+            inputPanel.SetActive(true);
+        }
     }
 
     async void test()
@@ -119,9 +132,10 @@ public class StoryManager : MonoBehaviour
 
     public void OnEnterForPromptInputField()
     {
-        Debug.Log($"Recived input: {promptInputField.text}");
+        Debug.Log($"Received input: {promptInputField.text}");
 
         inputPanel.SetActive(false); // Disable UI, since we are now playing the story.
+        loadingTextInfo.gameObject.SetActive(true);
 
         if (string.IsNullOrEmpty(promptInputField.text))
         {
