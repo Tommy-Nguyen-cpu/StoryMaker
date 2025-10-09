@@ -24,7 +24,20 @@ public class AiCharacterController : MonoBehaviour
     public bool onlyRotateY = true; // whether to lock X/Z tilt
     #endregion
 
-    public Character CharacterInfo { get; set; }
+    private Character characterInfo;
+    public Character CharacterInfo { 
+        get {
+            return characterInfo;
+        } 
+        set {
+            characterInfo = value;
+            if (characterInfo != null)
+            {
+                nameText.text = characterInfo.name;
+            }
+        } 
+    }
+    public string CharacterVoice { get; set; }
 
     void Awake()
     {

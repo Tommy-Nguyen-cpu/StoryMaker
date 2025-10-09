@@ -32,7 +32,6 @@ public class MultiMediaApiHandler
             {
                 AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
                 audioSource.clip = clip;
-                audioSource.Play();
             }
         }
     }
