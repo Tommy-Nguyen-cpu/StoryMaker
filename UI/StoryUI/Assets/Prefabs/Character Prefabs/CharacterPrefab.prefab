@@ -128,7 +128,7 @@ MonoBehaviour:
   nameTagInstance: {fileID: 3998192847552347914}
   nameText: {fileID: 5179811240154223094}
   onlyRotateY: 1
-  audioSource: {fileID: 0}
+  audioSource: {fileID: 8514244448682361501}
 --- !u!82 &8514244448682361501
 AudioSource:
   m_ObjectHideFlags: 0
