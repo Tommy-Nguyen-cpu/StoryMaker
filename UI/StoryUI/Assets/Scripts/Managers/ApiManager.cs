@@ -9,7 +9,6 @@ using UnityEngine.Networking;
 public class ApiManager : MonoBehaviour
 {
     #region Fields
-    public AudioSource audioSource;
     Config apiConfig;
     BasicApiHandler apiHandler;
     MultiMediaApiHandler multiMediaApiHandler;
@@ -101,7 +100,7 @@ public class ApiManager : MonoBehaviour
         return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
     }
 
-    public void SetTTS(string text, string voice)
+    public void SetTTS(string text, string voice, AudioSource audioSource)
     {
         // Build the URL, e.g. encode text & voice
         string url = $"{apiConfig.server_url}{Constants.ttsApi}?text={UnityWebRequest.EscapeURL(text)}&voice={voice}";

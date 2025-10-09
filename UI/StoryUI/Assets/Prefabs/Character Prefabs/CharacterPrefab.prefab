@@ -128,6 +128,7 @@ MonoBehaviour:
   nameTagInstance: {fileID: 3998192847552347914}
   nameText: {fileID: 5179811240154223094}
   onlyRotateY: 1
+  audioSource: {fileID: 0}
 --- !u!82 &8514244448682361501
 AudioSource:
   m_ObjectHideFlags: 0
@@ -250,7 +251,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 32
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!1 &3998192847552347914
 GameObject:

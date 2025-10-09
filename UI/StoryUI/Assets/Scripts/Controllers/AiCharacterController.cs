@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using TMPro;
+using UnityEngine.Audio;
 
 public class AiCharacterController : MonoBehaviour
 {
@@ -38,6 +39,9 @@ public class AiCharacterController : MonoBehaviour
         } 
     }
     public string CharacterVoice { get; set; }
+
+    [SerializeField]
+    private AudioSource audioSource;
 
     void Awake()
     {
@@ -114,5 +118,28 @@ public class AiCharacterController : MonoBehaviour
     {
         targetPosition = pos;
         OnArrived = onArriveParam;
+    }
+
+    // Example PlaySpeech coroutine (assumes you have an AudioClip or TTS that produces one)
+    // Replace the TTS/clip-fetching with your TTS implementation.
+    public IEnumerator PlaySpeech()
+    {
+        if (audioSource.clip == null)
+            yield break;
+
+        audioSource.Stop();
+        audioSource.Play();
+
+        // Wait until finished
+        yield return new WaitWhile(() => audioSource.isPlaying);
+    }
+
+    // Overload where you have text-based TTS — this stub shows pattern:
+    public IEnumerator PlaySpeech(string text, ApiManager apiManager)
+    {
+        // Replace this with your TTS call that returns an AudioClip or plays to audioSource.
+        // For demo, assume a synchronous TTS method SynthesizeToClip(text, voice) -> AudioClip
+       apiManager.SetTTS(text, CharacterVoice, audioSource); // implement this
+        yield return PlaySpeech();
     }
 }
