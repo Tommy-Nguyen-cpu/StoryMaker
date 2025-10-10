@@ -125,7 +125,10 @@ public class AiCharacterController : MonoBehaviour
     public IEnumerator PlaySpeech()
     {
         if (audioSource.clip == null)
+        {
+            Debug.Log("Audio clip is null...");
             yield break;
+        }
 
         audioSource.Stop();
         audioSource.Play();
@@ -137,9 +140,11 @@ public class AiCharacterController : MonoBehaviour
     // Overload where you have text-based TTS — this stub shows pattern:
     public IEnumerator PlaySpeech(string text, ApiManager apiManager)
     {
+        Debug.Log($"Playing: {text}");
         // Replace this with your TTS call that returns an AudioClip or plays to audioSource.
         // For demo, assume a synchronous TTS method SynthesizeToClip(text, voice) -> AudioClip
-       apiManager.SetTTS(text, CharacterVoice, audioSource); // implement this
+        yield return StartCoroutine(apiManager.SetTTS(text, CharacterVoice, audioSource));
+        Debug.Log("Got audio.");
         yield return PlaySpeech();
     }
 }

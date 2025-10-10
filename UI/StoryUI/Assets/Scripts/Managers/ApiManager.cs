@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -73,7 +74,7 @@ public class ApiManager : MonoBehaviour
         {
             // API will handle if conversation history is missing.
             var existingCharactersString = string.Join(",", conversationHistory.ToArray());
-            payload["existing_characters"] = existingCharactersString;
+            payload["conversation_history"] = existingCharactersString;
         }
 
         for (int i = 0; i < Constants.MAX_RETRY; i++)
@@ -100,12 +101,40 @@ public class ApiManager : MonoBehaviour
         return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
     }
 
-    public void SetTTS(string text, string voice, AudioSource audioSource)
+    // In ApiManager.cs
+    public IEnumerator SetTTS(string text, string voice, AudioSource audioSource)
     {
-        // Build the URL, e.g. encode text & voice
+        // Build the TTS URL or POST and get back a url to the wav/mp3.
+        // Replace BuildTtsUrlForText with your implementation that returns the audio file URL.
         string url = $"{apiConfig.server_url}{Constants.ttsApi}?text={UnityWebRequest.EscapeURL(text)}&voice={voice}";
-        StartCoroutine(multiMediaApiHandler.PlayFromUrl(url, audioSource));
+
+        // Optionally: log the URL
+        Debug.Log($"Requesting TTS at: {url}");
+
+        // Use your downloader which sets audioSource.clip when done
+        yield return MultiMediaApiHandler.Instance.PlayFromUrl(url, audioSource);
+
+        // Sanity checks
+        if (audioSource.clip == null)
+        {
+            Debug.LogError("SetTTSCoroutine: clip is still null after download.");
+            yield break;
+        }
+
+        // Wait until clip is fully loaded if needed
+        float waitStart = Time.time;
+        float timeout = 10f;
+        while (audioSource.clip.loadState != AudioDataLoadState.Loaded && Time.time - waitStart < timeout)
+        {
+            yield return null;
+        }
+
+        if (audioSource.clip.loadState != AudioDataLoadState.Loaded)
+        {
+            Debug.LogWarning($"Clip did not reach Loaded in {timeout}s. loadState={audioSource.clip.loadState}");
+        }
     }
+
     #endregion
 
     #region Helper Methods

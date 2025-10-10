@@ -76,7 +76,7 @@ public class StoryManager : MonoBehaviour
         var uniqueConversationHistory = new HashSet<string>();
 
         var history = new List<CharacterTalk>();
-        var conversationLength = UnityEngine.Random.Range(0, Constants.MaxConvLength);
+        var conversationLength = UnityEngine.Random.Range(2, Constants.MaxConvLength);
         for (int i = 0; i < conversationLength; i++)
         {
             var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
@@ -109,7 +109,7 @@ public class StoryManager : MonoBehaviour
 
     private GameObject InstantiateCharacterPrefab(Character charInfo)
     {
-        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(UnityEngine.Random.Range(0, 20), 10), Quaternion.identity);
+        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(UnityEngine.Random.Range(0, 5), 10), Quaternion.identity);
 
         var movementScript = instantiatedGameObj.GetComponent<AiCharacterController>();
         movementScript.CharacterInfo = charInfo;
@@ -127,6 +127,7 @@ public class StoryManager : MonoBehaviour
 
     public IEnumerator RunConversation(List<CharacterTalk> lines)
     {
+        Debug.Log($"Conversation length: {lines.Count}");
         foreach (var entry in lines)
         {
             characterMapper.TryGetValue(entry.character, out var sourceGameObj);
