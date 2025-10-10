@@ -26,6 +26,12 @@ public class StoryManager : MonoBehaviour
     TMP_Text loadingTextInfo;
     #endregion
 
+    [SerializeField]
+    TMP_Text spokeText;
+
+    [SerializeField]
+    GameObject scrollView;
+
     #region Prefabs
     [SerializeField]
     private GameObject characterPrefab;
@@ -93,7 +99,7 @@ public class StoryManager : MonoBehaviour
 
             var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, uniqueConversationHistory, availableActions);
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
-            Debug.Log(newRes);
+            Debug.Log(newRes + $"\nAction: {newResponse.character_response.action}");
 
             uniqueConversationHistory.Add(newRes);
             history.Add(newResponse.character_response);
@@ -178,6 +184,7 @@ public class StoryManager : MonoBehaviour
             if (!string.IsNullOrEmpty(entry.response))
             {
                 // If you have pre-generated clip lookup, use that. Here we call the AiCharacterController's PlaySpeech coroutine.
+                spokeText.text = $"{entry.character}: {entry.response}";
                 yield return StartCoroutine(sourceController.PlaySpeech(entry.response, apiManager));
             }
 
@@ -186,6 +193,8 @@ public class StoryManager : MonoBehaviour
         }
 
         Debug.Log("Conversation finished.");
+        scrollView.SetActive(false);
+        inputPanel.SetActive(true);
     }
 
     async void GenerateStory(string prompt)
@@ -202,6 +211,7 @@ public class StoryManager : MonoBehaviour
             var conversationHistory = await GetCharacterConversations(characters, storyPrompt);
             loadingTextInfo.gameObject.SetActive(false);
 
+            scrollView.SetActive(true);
             StartCoroutine(RunConversation(conversationHistory));
         }
         catch (Exception e)

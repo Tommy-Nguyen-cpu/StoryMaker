@@ -88,9 +88,9 @@ public class ApiManager : MonoBehaviour
             string json = JsonConvert.SerializeObject(payload);
             var response = await AiRequestHandler<GetCharacterTalkResponse>(apiConfig.server_url + Constants.GenerateCharacterResponseApi, json, "GET");
 
-            if (response != null && conversationHistory != null && conversationHistory.Contains(response.character_response.response))
+            if (response != null && conversationHistory != null && conversationHistory.Contains($"{response.character_response.character}: {response.character_response.response}"))
             {
-                Debug.Log($"(Attempt {i} AI generated existing dialogue. Generating again...");
+                Debug.Log($"(Attempt {i}) AI generated existing dialogue. Generating again...");
                 continue;
             }
 
