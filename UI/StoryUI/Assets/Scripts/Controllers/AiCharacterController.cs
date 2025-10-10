@@ -109,6 +109,7 @@ public class AiCharacterController : MonoBehaviour
         // Check to see if we have arrived.
         if (Vector3.Distance(transform.position, targetPosition) <= arriveDistance)
         {
+            Debug.Log("Reached target!");
             hasTarget = false;
             OnArrived?.Invoke();
         }
@@ -116,7 +117,9 @@ public class AiCharacterController : MonoBehaviour
 
     public void SetTarget(Vector3 pos, Action onArriveParam)
     {
+        Debug.Log("Setted target!");
         targetPosition = pos;
+        hasTarget = true;
         OnArrived = onArriveParam;
     }
 

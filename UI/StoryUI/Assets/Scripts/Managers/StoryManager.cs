@@ -65,7 +65,7 @@ public class StoryManager : MonoBehaviour
             charactersSet.Add(characters[i].name);
             Debug.Log($"Name: {characters[i].name}\nGender: {characters[i].gender}\nPersonality: {characters[i].personality}\nDescription: {characters[i].description}");
 
-            characterMapper.Add(character.name, InstantiateCharacterPrefab(character));
+            characterMapper.Add(character.name.ToLower(), InstantiateCharacterPrefab(character));
         }
 
         return characters;
@@ -120,7 +120,7 @@ public class StoryManager : MonoBehaviour
 
     private GameObject InstantiateCharacterPrefab(Character charInfo)
     {
-        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(UnityEngine.Random.Range(0, 5), 10), Quaternion.identity);
+        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(UnityEngine.Random.Range(0, 50), 10), Quaternion.identity);
 
         var movementScript = instantiatedGameObj.GetComponent<AiCharacterController>();
         movementScript.CharacterInfo = charInfo;
@@ -141,7 +141,7 @@ public class StoryManager : MonoBehaviour
         Debug.Log($"Conversation length: {lines.Count}");
         foreach (var entry in lines)
         {
-            characterMapper.TryGetValue(entry.character, out var sourceGameObj);
+            characterMapper.TryGetValue(entry.character.ToLower(), out var sourceGameObj);
             if (sourceGameObj == null)
             {
                 Debug.LogWarning("AI generated invalid character in CharacterTalk.");
@@ -151,14 +151,16 @@ public class StoryManager : MonoBehaviour
             var sourceController = sourceGameObj.GetComponent<AiCharacterController>();
 
             // Example: interpret action "move to <characterName>"
-            if (!string.IsNullOrEmpty(entry.action) && entry.action.StartsWith("move to"))
+            if (!string.IsNullOrEmpty(entry.action) && entry.action.ToLower().StartsWith("move to"))
             {
+                Debug.Log($"Found action! {entry.action}");
                 // parse target name
                 // expected form: "move to Bob" or "move to: Bob" etc. Adjust parsing as needed.
                 string[] parts = entry.action.Split(' ');
                 string targetName = parts.Length >= 3 ? parts[2] : null;
-                if (targetName != null && characterMapper.TryGetValue(targetName, out GameObject targetGameObject))
+                if (targetName != null && characterMapper.TryGetValue(targetName.ToLower(), out GameObject targetGameObject))
                 {
+                    Debug.Log($"Found character, moving towards them!: {targetName}");
                     // Use a closure/lambda so the onArrive callback has the entry in scope
                     bool arrived = false;
                     sourceController.SetTarget(targetGameObject.transform.position, () => { arrived = true; });
