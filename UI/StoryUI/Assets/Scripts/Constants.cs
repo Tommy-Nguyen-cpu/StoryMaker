@@ -7,5 +7,8 @@ public static class Constants
     public const string ttsApi = "/tts";
 
     public const int MAX_RETRY = 5;
-    public const int MaxConvLength = 10;
+    public const int MaxConvLength = 5;
+
+    // TODO: Will add more actions later on, but "Move to" is the only action that requires a character.
+    public const string MoveToAction = "Move to ";
 }

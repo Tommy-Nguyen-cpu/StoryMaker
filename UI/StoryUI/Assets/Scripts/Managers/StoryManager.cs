@@ -80,7 +80,18 @@ public class StoryManager : MonoBehaviour
         for (int i = 0; i < conversationLength; i++)
         {
             var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
-            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, characters[randCharacterIdx].name, characters[randCharacterIdx].personality, uniqueConversationHistory);
+            var talkingCharacter = characters[randCharacterIdx];
+
+            var availableActions = new List<string>();
+            for (int j = 0;j < characters.Count; j++)
+            {
+                if (characters[j].name.ToLower() != talkingCharacter.name.ToLower())
+                {
+                    availableActions.Add(Constants.MoveToAction + characters[j].name);
+                }
+            }
+
+            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, uniqueConversationHistory, availableActions);
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
             Debug.Log(newRes);
 

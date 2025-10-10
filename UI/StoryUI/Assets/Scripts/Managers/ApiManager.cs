@@ -60,7 +60,7 @@ public class ApiManager : MonoBehaviour
         return null;
     }
 
-    public async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, HashSet<string> conversationHistory = null)
+    public async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, HashSet<string> conversationHistory = null, List<string> availableActions = null)
     {
         var payload = new Dictionary<string, string> {
             { "additional_notes", additional_notes },
@@ -75,6 +75,12 @@ public class ApiManager : MonoBehaviour
             // API will handle if conversation history is missing.
             var existingCharactersString = string.Join(",", conversationHistory.ToArray());
             payload["conversation_history"] = existingCharactersString;
+        }
+
+        if(availableActions != null && availableActions.Count > 0)
+        {
+            var availableActionsString = string.Join(",", availableActions.ToArray());
+            payload["available_actions"] = availableActionsString;
         }
 
         for (int i = 0; i < Constants.MAX_RETRY; i++)
