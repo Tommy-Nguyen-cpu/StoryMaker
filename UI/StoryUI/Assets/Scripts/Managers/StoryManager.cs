@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Text.RegularExpressions;
+using UnityEngine.UI;
 
 public class StoryManager : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class StoryManager : MonoBehaviour
 
     [SerializeField]
     TMP_Text loadingTextInfo;
+
+    [SerializeField]
+    Slider slider;
+    private int numberOfCharacters;
     #endregion
 
     [SerializeField]
@@ -38,9 +43,20 @@ public class StoryManager : MonoBehaviour
     private GameObject characterPrefab;
     #endregion
 
+    #region Camera Parameters
+    public float distance = 100f; // Distance from the object
+    public Vector3 offsetDirection = Vector3.back; // Direction relative to the target
+
+    private Vector3 originalPos;
+    private Quaternion originalOrientation;
+    #endregion
+
     async void Start()
     {
         availableVoices = await apiManager.GetAvailableVoices();
+
+        originalPos = Camera.main.transform.position;
+        originalOrientation = Camera.main.transform.rotation;
 
         /*if(availableVoices != null && availableVoices.male_voices.Count > 0)
         {
@@ -65,7 +81,7 @@ public class StoryManager : MonoBehaviour
     {
         var characters = new List<Character>();
         HashSet<string> charactersSet = new HashSet<string>();
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < numberOfCharacters; i++)
         {
             var character = (await apiManager.CreateCharacter(storyPrompt, charactersSet)).character;
             characters.Add(character);
@@ -84,6 +100,7 @@ public class StoryManager : MonoBehaviour
 
         var history = new List<CharacterTalk>();
         var conversationLength = UnityEngine.Random.Range(2, Constants.MaxConvLength);
+        Debug.Log($"Generating {conversationLength} conversations.");
         for (int i = 0; i < conversationLength; i++)
         {
             var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
@@ -189,6 +206,12 @@ public class StoryManager : MonoBehaviour
                     scrollView.SetActive(true);
                 }
 
+                // Move camera to be "distance" units away from the target, in the chosen direction
+                Camera.main.transform.position = sourceGameObj.transform.position + offsetDirection.normalized * distance;
+
+                // Make the camera look at the target
+                Camera.main.transform.LookAt(sourceGameObj.transform);
+
                 // If you have pre-generated clip lookup, use that. Here we call the AiCharacterController's PlaySpeech coroutine.
                 spokeText.text = $"{entry.character}: {entry.response}";
                 yield return StartCoroutine(sourceController.PlaySpeech(entry.response, apiManager));
@@ -200,6 +223,8 @@ public class StoryManager : MonoBehaviour
 
         Debug.Log("Conversation finished.");
         inputPanel.SetActive(true);
+        Camera.main.transform.position = originalPos;
+        Camera.main.transform.rotation = originalOrientation;
     }
 
     async void GenerateStory(string prompt)
@@ -209,7 +234,7 @@ public class StoryManager : MonoBehaviour
             loadingTextInfo.text = "Enhancing Prompt if requested...";
             var storyPrompt = await EnhanceStoryPrompt(prompt);
 
-            loadingTextInfo.text = "Creating unique characters...";
+            loadingTextInfo.text = $"Creating {numberOfCharacters} unique characters...";
             var characters = await CreateUniqueCharacters(storyPrompt);
 
             loadingTextInfo.text = "Creating character conversations...";
@@ -255,5 +280,10 @@ public class StoryManager : MonoBehaviour
     {
         enhancePrompt = !enhancePrompt;
         Debug.Log($"Enhancing prompt: {enhancePrompt}");
+    }
+
+    public void OnNumCharacterSliderChange()
+    {
+        numberOfCharacters = (int)slider.value;
     }
 }
