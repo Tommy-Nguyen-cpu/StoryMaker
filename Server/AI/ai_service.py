@@ -126,12 +126,16 @@ def get_character_talk(request : Dict[str, str]):
         request["available_actions"] = "N/A"
     if "conversation_history" not in request:
         request["conversation_history"] = "N/A"
+        request["last_line"] = "N/A"
+    else:
+        conv_history = request["conversation_history"].split(",")[-1]
+        request["last_line"] = conv_history
 
     print("Creating character talk with request:", request)
-    instructions = ROLE + ''' Based on the user's notes, character, and story description, write a natural spoken line of dialogue representing what the character says aloud that fits the character`s personality and the story context. If no characters have spoken yet, start the conversation.
+    instructions = ROLE + ''' Based on the user's notes, character, and story description, write a natural spoken line of dialogue representing what the character says aloud that fits the character`s personality, the story description, and the conversation context. If no characters have spoken yet, start the conversation.
 Your response must be for the character specified in the request and no other characters.
-Use the entire conversation history as context for what has already been said.
-Do not repeat or rephrase any dialogue from the history. Each response must be unique and progress the conversation naturally.
+Use the conversation context specified in the context section for what has already been said.
+Provide unique responses that continue the conversation based on the context. Do not repeat or stray off-topic.
 If the character takes an action, include it in the "action" field. If no action is taken, leave the "action" field empty. Only include actions available in the "Available Actions" section.
 Your response must be in the format:
 {"character": "<character_name>", "response": "<character_response>", "action": "<character_action>" }
@@ -142,7 +146,7 @@ For example:
 if "Available Actions" is "turn left, turn right, walk straight, smile brightly",
 {"character": "Alice", "response": "I can't believe we made it this far!", "action": "smiles brightly"}
 '''
-    prompt = f"Story Description: {request['story_description']}\n\nConversation History:{request['conversation_history']}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nAvailable Actions: {request['available_actions']}\n\nUser Additional Notes: {request['additional_notes']}"
+    prompt = f"Story Description: {request['story_description']}\n\nContext:{request['conversation_history']}\n\nPrevious line to reply to: {request["last_line"]}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nAvailable Actions: {request['available_actions']}\n\nUser Additional Notes: {request['additional_notes']}"
     character_response = llmInstance.generate_text(prompt, instructions)
 
     thinking_content, character_response = clean_ai_response(character_response)

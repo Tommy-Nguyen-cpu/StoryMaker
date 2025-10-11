@@ -4,6 +4,7 @@ using TMPro;
 using System;
 using System.Threading.Tasks;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 public class StoryManager : MonoBehaviour
 {
@@ -157,7 +158,7 @@ public class StoryManager : MonoBehaviour
             var sourceController = sourceGameObj.GetComponent<AiCharacterController>();
 
             // Example: interpret action "move to <characterName>"
-            if (!string.IsNullOrEmpty(entry.action) && entry.action.ToLower().StartsWith("move to"))
+            if (!string.IsNullOrEmpty(entry.action) && Regex.IsMatch(entry.action, @"^\s*move(s)?\s*to\b", RegexOptions.IgnoreCase))
             {
                 Debug.Log($"Found action! {entry.action}");
                 // parse target name
@@ -183,6 +184,11 @@ public class StoryManager : MonoBehaviour
             // After the action (or immediately if no action) speak the response
             if (!string.IsNullOrEmpty(entry.response))
             {
+                if (!scrollView.activeInHierarchy)
+                {
+                    scrollView.SetActive(true);
+                }
+
                 // If you have pre-generated clip lookup, use that. Here we call the AiCharacterController's PlaySpeech coroutine.
                 spokeText.text = $"{entry.character}: {entry.response}";
                 yield return StartCoroutine(sourceController.PlaySpeech(entry.response, apiManager));
@@ -193,7 +199,6 @@ public class StoryManager : MonoBehaviour
         }
 
         Debug.Log("Conversation finished.");
-        scrollView.SetActive(false);
         inputPanel.SetActive(true);
     }
 
@@ -211,7 +216,6 @@ public class StoryManager : MonoBehaviour
             var conversationHistory = await GetCharacterConversations(characters, storyPrompt);
             loadingTextInfo.gameObject.SetActive(false);
 
-            scrollView.SetActive(true);
             StartCoroutine(RunConversation(conversationHistory));
         }
         catch (Exception e)
@@ -224,6 +228,16 @@ public class StoryManager : MonoBehaviour
     public void OnEnterForPromptInputField()
     {
         Debug.Log($"Received input: {promptInputField.text}");
+        Debug.Log("Clearing existing stuff...");
+        scrollView.SetActive(false);
+        usedVoices.Clear();
+
+        foreach (var charObj in characterMapper.Values)
+        {
+            Destroy(charObj);
+        }
+
+        characterMapper.Clear();
 
         inputPanel.SetActive(false); // Disable UI, since we are now playing the story.
         loadingTextInfo.gameObject.SetActive(true);

@@ -10,7 +10,7 @@ public class AiCharacterController : MonoBehaviour
     #region Movement Fields
     private const float speed = 3f;
     private const float rotationSpeed = 10f;
-    private const float arriveDistance = 0.05f;
+    private const float arriveDistance = 0.5f;
 
     private event Action OnArrived;
     private bool hasTarget = false;
