@@ -143,10 +143,6 @@ Your response must be in the format:
 {"character": "<character_name>", "response": "<character_response>", "action": "<character_action>" }
 
 You must strictly follow this format without any additional text or explanation.
-
-Use the following example as a guide, but do not copy it:
-if "Available Actions" is "turn left, turn right, walk straight, smile brightly",
-{"character": "Alice", "response": "I can't believe we made it this far!", "action": "smiles brightly"}
 '''
     prompt = f"Story Description: {request['story_description']}\n\nContext:{request['conversation_history']}\n\nPrevious line to reply to: {request["last_line"]}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nAvailable Actions: {request['available_actions']}\n\nUser Additional Notes: {request['additional_notes']}"
     character_response = llmInstance.generate_text(prompt, instructions)
