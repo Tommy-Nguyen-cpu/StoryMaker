@@ -44,7 +44,7 @@ public class StoryManager : MonoBehaviour
     #endregion
 
     #region Camera Parameters
-    public float distance = 100f; // Distance from the object
+    public float distance = 5000f; // Distance from the object
     public Vector3 offsetDirection = Vector3.back; // Direction relative to the target
 
     private Vector3 originalPos;
@@ -57,6 +57,7 @@ public class StoryManager : MonoBehaviour
 
         originalPos = Camera.main.transform.position;
         originalOrientation = Camera.main.transform.rotation;
+        numberOfCharacters = (int)slider.value;
 
         /*if(availableVoices != null && availableVoices.male_voices.Count > 0)
         {
@@ -81,11 +82,13 @@ public class StoryManager : MonoBehaviour
     {
         var characters = new List<Character>();
         HashSet<string> charactersSet = new HashSet<string>();
+        var characterRoleMapper = new HashSet<string>();
         for (int i = 0; i < numberOfCharacters; i++)
         {
-            var character = (await apiManager.CreateCharacter(storyPrompt, charactersSet)).character;
+            var character = (await apiManager.CreateCharacter(storyPrompt, charactersSet, characterRoleMapper)).character;
             characters.Add(character);
             charactersSet.Add(characters[i].name);
+            characterRoleMapper.Add($"({characters[i].name}, {characters[i].role})");
             Debug.Log($"Name: {characters[i].name}\nGender: {characters[i].gender}\nPersonality: {characters[i].personality}\nDescription: {characters[i].description}");
 
             characterMapper.Add(character.name.ToLower(), InstantiateCharacterPrefab(character));
@@ -207,7 +210,7 @@ public class StoryManager : MonoBehaviour
                 }
 
                 // Move camera to be "distance" units away from the target, in the chosen direction
-                Camera.main.transform.position = sourceGameObj.transform.position + offsetDirection.normalized * distance;
+                Camera.main.transform.position = sourceGameObj.transform.position + offsetDirection * distance;
 
                 // Make the camera look at the target
                 Camera.main.transform.LookAt(sourceGameObj.transform);
@@ -285,5 +288,6 @@ public class StoryManager : MonoBehaviour
     public void OnNumCharacterSliderChange()
     {
         numberOfCharacters = (int)slider.value;
+        Debug.Log($"User picked {numberOfCharacters} characters to generate.");
     }
 }

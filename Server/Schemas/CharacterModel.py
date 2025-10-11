@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 class CharacterModel(BaseModel):
     name: str
+    role: str
     description: str
     gender: str
     personality: str

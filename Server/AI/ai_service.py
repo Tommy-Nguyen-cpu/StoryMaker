@@ -97,9 +97,11 @@ def create_character(request : Dict[str, str]):
         request["existing_characters"] = "N/A"
 
     print("Creating character with request:", request)
-    instructions = ROLE + ''' Create a character alongside their name, description, gender (must be male OR female), and personality so that they fit into the story description provided. Avoid creating characters specified in the "Existing Characters" section. If no characters exist yet, create the first character.
+    instructions = ROLE + ''' Create a character alongside their name, role, description, gender (must be male OR female), and personality so that they fit into the story description provided.
+    Avoid creating characters with a given role specified in the "Existing Characters" section. For example, if ("Mark", "the brave hero") is an existing character, do not create another character with either the name Mark or the role of "the brave hero".
+    If no characters exist yet, create the first character.
 Your response must be in the format:
-{"name": "<character_name>", "description": "<character_description>", "gender": "<character_gender>", "personality": "<character_personality>" }
+{"name": "<character_name>", "role": "<role_of_character>", "description": "<character_description>", "gender": "<character_gender>", "personality": "<character_personality>" }
 
 You must strictly follow this format without any additional text or explanation.
 '''
@@ -142,7 +144,7 @@ Your response must be in the format:
 
 You must strictly follow this format without any additional text or explanation.
 
-For example:
+Use the following example as a guide, but do not copy it:
 if "Available Actions" is "turn left, turn right, walk straight, smile brightly",
 {"character": "Alice", "response": "I can't believe we made it this far!", "action": "smiles brightly"}
 '''

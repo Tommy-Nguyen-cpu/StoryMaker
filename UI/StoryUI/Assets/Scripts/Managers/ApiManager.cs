@@ -31,15 +31,15 @@ public class ApiManager : MonoBehaviour
         return response;
     }
 
-    public async Task<CreateCharacterResponse> CreateCharacter(string description, HashSet<string> existingCharacters = null)
+    public async Task<CreateCharacterResponse> CreateCharacter(string description, HashSet<string> existingCharacters = null, HashSet<string> characterRoleMapper = null)
     {
         var payload = new Dictionary<string, string> {
             { "story_description", description }
         };
 
-        if (existingCharacters != null && existingCharacters.Count > 0)
+        if (characterRoleMapper != null && characterRoleMapper.Count > 0)
         {
-            var existingCharactersString = string.Join(",", existingCharacters.ToArray());
+            var existingCharactersString = string.Join(",", characterRoleMapper.ToArray());
             payload["existing_characters"] = existingCharactersString;
         }
 
@@ -73,7 +73,7 @@ public class ApiManager : MonoBehaviour
         if (conversationHistory != null && conversationHistory.Count > 0)
         {
             // API will handle if conversation history is missing.
-            var existingCharactersString = string.Join(",", conversationHistory.ToArray());
+            var existingCharactersString = string.Join(",", conversationHistory.Select(s => $"<{s}>"));
             payload["conversation_history"] = existingCharactersString;
         }
 
