@@ -13,7 +13,6 @@ public class MultiMediaApiHandler
     private MultiMediaApiHandler() { }
     #endregion
 
-
     public IEnumerator PlayFromUrl(string url, AudioSource audioSource)
     {
         using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(url, AudioType.WAV))

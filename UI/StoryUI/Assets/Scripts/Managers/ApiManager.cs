@@ -12,14 +12,12 @@ public class ApiManager : MonoBehaviour
     #region Fields
     Config apiConfig;
     BasicApiHandler apiHandler;
-    MultiMediaApiHandler multiMediaApiHandler;
     #endregion
 
     public void Awake()
     {
         apiConfig = ConfigLoader.LoadConfig();
         apiHandler = BasicApiHandler.Instance;
-        multiMediaApiHandler = MultiMediaApiHandler.Instance;
     }
 
     #region LLM Methods
@@ -107,7 +105,6 @@ public class ApiManager : MonoBehaviour
         return await AiRequestAsync<GetAvailableVoicesResponse>(apiConfig.server_url + Constants.GetAvailableVoicesApi, "", "GET");
     }
 
-    // In ApiManager.cs
     public IEnumerator SetTTS(string text, string voice, AudioSource audioSource)
     {
         // Build the TTS URL or POST and get back a url to the wav/mp3.
@@ -129,15 +126,14 @@ public class ApiManager : MonoBehaviour
 
         // Wait until clip is fully loaded if needed
         float waitStart = Time.time;
-        float timeout = 10f;
-        while (audioSource.clip.loadState != AudioDataLoadState.Loaded && Time.time - waitStart < timeout)
+        while (audioSource.clip.loadState != AudioDataLoadState.Loaded && Time.time - waitStart < Constants.Timeout)
         {
             yield return null;
         }
 
         if (audioSource.clip.loadState != AudioDataLoadState.Loaded)
         {
-            Debug.LogWarning($"Clip did not reach Loaded in {timeout}s. loadState={audioSource.clip.loadState}");
+            Debug.LogWarning($"Clip did not reach Loaded in {Constants.Timeout}s. loadState={audioSource.clip.loadState}");
         }
     }
 

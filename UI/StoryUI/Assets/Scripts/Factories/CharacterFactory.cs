@@ -1,30 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class CharacterFactory
 {
-    public static GameObject CreatePrimitiveCharacter(Color color, Vector3 position, Vector3 scale)
+    public static GameObject SetUpPrimitiveCharacter(GameObject instantiatedGameObj, Character charInfo, string voice)
     {
-        GameObject cyl = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        cyl.transform.position = position;
-        cyl.transform.localScale = scale;
+        var movementScript = instantiatedGameObj.GetComponent<AiCharacterController>();
+        movementScript.CharacterInfo = charInfo;
+        movementScript.CharacterVoice = voice;
 
-        Renderer rend = cyl.GetComponent<Renderer>();
-        if (rend != null)
-        {
-            Material mat = new Material(rend.sharedMaterial);
-            if (mat.HasProperty("_Color"))
-                mat.SetColor("_Color", color);
-            else if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-            rend.material = mat;
-        }
+        // Get the Renderer component
+        Renderer renderer = instantiatedGameObj.GetComponent<Renderer>();
+        renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
 
-        // Add necessary components to AI asset.
-        cyl.AddComponent<AiCharacterController>();
-        cyl.AddComponent<AudioSource>();
-
-        return cyl;
+        return instantiatedGameObj;
     }
 }

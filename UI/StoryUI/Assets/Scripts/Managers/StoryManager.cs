@@ -7,6 +7,9 @@ using System.Collections;
 using System.Text.RegularExpressions;
 using UnityEngine.UI;
 
+using Random = UnityEngine.Random;
+using System.Linq;
+
 public class StoryManager : MonoBehaviour
 {
     public ApiManager apiManager;
@@ -15,8 +18,7 @@ public class StoryManager : MonoBehaviour
     private HashSet<string> usedVoices = new HashSet<string>();
     private Dictionary<string, GameObject> characterMapper = new Dictionary<string, GameObject>();
 
-    private bool enhancePrompt = true;
-
+    #region UI
     #region Input Prompt UIs
     [SerializeField]
     GameObject inputPanel;
@@ -30,6 +32,8 @@ public class StoryManager : MonoBehaviour
     [SerializeField]
     Slider slider;
     private int numberOfCharacters;
+
+    private bool enhancePrompt = true;
     #endregion
 
     [SerializeField]
@@ -38,15 +42,15 @@ public class StoryManager : MonoBehaviour
     [SerializeField]
     GameObject scrollView;
 
+    #endregion
+
     #region Prefabs
     [SerializeField]
     private GameObject characterPrefab;
     #endregion
 
     #region Camera Parameters
-    public float distance = 5000f; // Distance from the object
-    public Vector3 offsetDirection = Vector3.back; // Direction relative to the target
-
+    private float cameraDistance = 10f;
     private Vector3 originalPos;
     private Quaternion originalOrientation;
     #endregion
@@ -58,16 +62,9 @@ public class StoryManager : MonoBehaviour
         originalPos = Camera.main.transform.position;
         originalOrientation = Camera.main.transform.rotation;
         numberOfCharacters = (int)slider.value;
-
-        /*if(availableVoices != null && availableVoices.male_voices.Count > 0)
-        {
-            apiManager.PlayTTS("Hello world! This is a text to speak generation from a python API!", availableVoices.male_voices[0]);
-        }
-
-        test();*/
     }
 
-    async Task<string> EnhanceStoryPrompt(string prompt)
+    private async Task<string> EnhanceStoryPrompt(string prompt)
     {
         if (enhancePrompt)
         {
@@ -78,10 +75,10 @@ public class StoryManager : MonoBehaviour
         return prompt;
     }
 
-    async Task<List<Character>> CreateUniqueCharacters(string storyPrompt)
+    private async Task<List<Character>> CreateUniqueCharacters(string storyPrompt)
     {
         var characters = new List<Character>();
-        HashSet<string> charactersSet = new HashSet<string>();
+        var charactersSet = new HashSet<string>();
         var characterRoleMapper = new HashSet<string>();
         for (int i = 0; i < numberOfCharacters; i++)
         {
@@ -97,75 +94,30 @@ public class StoryManager : MonoBehaviour
         return characters;
     }
 
-    async Task<List<CharacterTalk>> GetCharacterConversations(List<Character> characters, string storyDescription)
+    private async Task<List<CharacterTalk>> GetCharacterConversations(List<Character> characters, string storyDescription)
     {
-        var uniqueConversationHistory = new HashSet<string>();
+        var uniqueConvMapper = new Dictionary<string, CharacterTalk>();
+        var conversationLength = Random.Range(2, Constants.MaxConvLength);
 
-        var history = new List<CharacterTalk>();
-        var conversationLength = UnityEngine.Random.Range(2, Constants.MaxConvLength);
         Debug.Log($"Generating {conversationLength} conversations.");
         for (int i = 0; i < conversationLength; i++)
         {
-            var randCharacterIdx = UnityEngine.Random.Range(0, characters.Count);
+            var randCharacterIdx = Random.Range(0, characters.Count);
             var talkingCharacter = characters[randCharacterIdx];
+            var availableActions = GetAvailableActions(characters, talkingCharacter.name);
 
-            var availableActions = new List<string>();
-            for (int j = 0;j < characters.Count; j++)
-            {
-                if (characters[j].name.ToLower() != talkingCharacter.name.ToLower())
-                {
-                    availableActions.Add(Constants.MoveToAction + characters[j].name);
-                }
-            }
-
-            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, uniqueConversationHistory, availableActions);
+            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, uniqueConvMapper.Keys.ToHashSet(), availableActions);
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
             Debug.Log(newRes + $"\nAction: {newResponse.character_response.action}");
 
-            uniqueConversationHistory.Add(newRes);
-            history.Add(newResponse.character_response);
+            uniqueConvMapper.TryAdd(newRes, newResponse.character_response);
         }
 
-        return history;
-    }
-
-    private string GetUniqueVoice(List<string> voices)
-    {
-        foreach(var voice in voices)
-        {
-            if (usedVoices.Contains(voice))
-            {
-                continue;
-            }
-
-            usedVoices.Add(voice);
-            return voice;
-        }
-
-        return voices[0]; // TODO: There is a much better way of doing this.
-    }
-
-    private GameObject InstantiateCharacterPrefab(Character charInfo)
-    {
-        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(UnityEngine.Random.Range(0, 50), 10), Quaternion.identity);
-
-        var movementScript = instantiatedGameObj.GetComponent<AiCharacterController>();
-        movementScript.CharacterInfo = charInfo;
-        movementScript.CharacterVoice = GetUniqueVoice(charInfo.gender == "male" ? availableVoices.male_voices : availableVoices.female_voices);
-
-        // Get the Renderer component
-        Renderer renderer = instantiatedGameObj.GetComponent<Renderer>();
-        var randR = UnityEngine.Random.Range(0.0f, 1.0f);
-        var randG = UnityEngine.Random.Range(0.0f, 1.0f);
-        var randB = UnityEngine.Random.Range(0.0f, 1.0f);
-        renderer.material.color = new Color(randR, randG, randB);
-
-        return instantiatedGameObj;
+        return uniqueConvMapper.Values.ToList();
     }
 
     public IEnumerator RunConversation(List<CharacterTalk> lines)
     {
-        Debug.Log($"Conversation length: {lines.Count}");
         foreach (var entry in lines)
         {
             characterMapper.TryGetValue(entry.character.ToLower(), out var sourceGameObj);
@@ -177,45 +129,38 @@ public class StoryManager : MonoBehaviour
 
             var sourceController = sourceGameObj.GetComponent<AiCharacterController>();
 
-            // Example: interpret action "move to <characterName>"
-            if (!string.IsNullOrEmpty(entry.action) && Regex.IsMatch(entry.action, @"^\s*move(s)?\s*to\b", RegexOptions.IgnoreCase))
+            if (!string.IsNullOrEmpty(entry.action))
             {
-                Debug.Log($"Found action! {entry.action}");
-                // parse target name
-                // expected form: "move to Bob" or "move to: Bob" etc. Adjust parsing as needed.
-                string[] parts = entry.action.Split(' ');
-                string targetName = parts.Length >= 3 ? parts[2] : null;
-                if (targetName != null && characterMapper.TryGetValue(targetName.ToLower(), out GameObject targetGameObject))
+                var pattern = @"\bmove(?:s)?\s*to[:\-\s]*['""]?(?<target>.+?)['""]?(?=$|\s*[.!?])";
+                var match = Regex.Match(entry.action, pattern, RegexOptions.IgnoreCase);
+                if (match.Success)
                 {
-                    Debug.Log($"Found character, moving towards them!: {targetName}");
-                    // Use a closure/lambda so the onArrive callback has the entry in scope
-                    bool arrived = false;
-                    sourceController.SetTarget(targetGameObject.transform.position, () => { arrived = true; });
+                    string rawTarget = match.Groups["target"].Value.Trim();
+                    Debug.Log($"Target retrieved: {rawTarget}");
+                    if (characterMapper.TryGetValue(rawTarget.ToLower(), out GameObject targetGameObject))
+                    {
+                        // Use a closure/lambda so the onArrive callback has the entry in scope
+                        bool arrived = false;
+                        sourceController.SetTarget(targetGameObject.transform.position, () => { arrived = true; });
 
-                    // Wait until arrival (uses aiController.IsMoving)
-                    yield return new WaitUntil(() => arrived);
-                }
-                else
-                {
-                    Debug.LogWarning($"No target found for action '{entry.action}'. Skipping move.");
+                        // Wait until arrival (uses aiController.IsMoving)
+                        yield return new WaitUntil(() => arrived);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"No target found for action '{entry.action}'. Skipping move.");
+                    }
                 }
             }
 
             // After the action (or immediately if no action) speak the response
             if (!string.IsNullOrEmpty(entry.response))
             {
-                if (!scrollView.activeInHierarchy)
-                {
-                    scrollView.SetActive(true);
-                }
-
                 // Move camera to be "distance" units away from the target, in the chosen direction
-                Camera.main.transform.position = sourceGameObj.transform.position + offsetDirection * distance;
-
-                // Make the camera look at the target
+                Camera.main.transform.position = sourceGameObj.transform.position + Vector3.back * cameraDistance;
                 Camera.main.transform.LookAt(sourceGameObj.transform);
 
-                // If you have pre-generated clip lookup, use that. Here we call the AiCharacterController's PlaySpeech coroutine.
+                scrollView.SetActive(true);
                 spokeText.text = $"{entry.character}: {entry.response}";
                 yield return StartCoroutine(sourceController.PlaySpeech(entry.response, apiManager));
             }
@@ -226,14 +171,13 @@ public class StoryManager : MonoBehaviour
 
         Debug.Log("Conversation finished.");
         inputPanel.SetActive(true);
-        Camera.main.transform.position = originalPos;
-        Camera.main.transform.rotation = originalOrientation;
     }
 
     async void GenerateStory(string prompt)
     {
         try
         {
+            inputPanel.SetActive(false); // Disable UI, since we are now playing the story.
             loadingTextInfo.text = "Enhancing Prompt if requested...";
             var storyPrompt = await EnhanceStoryPrompt(prompt);
 
@@ -242,7 +186,7 @@ public class StoryManager : MonoBehaviour
 
             loadingTextInfo.text = "Creating character conversations...";
             var conversationHistory = await GetCharacterConversations(characters, storyPrompt);
-            loadingTextInfo.gameObject.SetActive(false);
+            loadingTextInfo.text = string.Empty;
 
             StartCoroutine(RunConversation(conversationHistory));
         }
@@ -253,28 +197,17 @@ public class StoryManager : MonoBehaviour
         }
     }
 
+    #region Events
     public void OnEnterForPromptInputField()
     {
         Debug.Log($"Received input: {promptInputField.text}");
-        Debug.Log("Clearing existing stuff...");
-        scrollView.SetActive(false);
-        usedVoices.Clear();
-
-        foreach (var charObj in characterMapper.Values)
-        {
-            Destroy(charObj);
-        }
-
-        characterMapper.Clear();
-
-        inputPanel.SetActive(false); // Disable UI, since we are now playing the story.
-        loadingTextInfo.gameObject.SetActive(true);
-
         if (string.IsNullOrEmpty(promptInputField.text))
         {
             Debug.LogWarning("No story prompt was provided. Please provide a prompt.");
             return;
         }
+
+        ResetSceneComponents();
 
         GenerateStory(promptInputField.text);
     }
@@ -290,4 +223,64 @@ public class StoryManager : MonoBehaviour
         numberOfCharacters = (int)slider.value;
         Debug.Log($"User picked {numberOfCharacters} characters to generate.");
     }
+    #endregion
+
+    #region Helper
+    /// <summary>
+    /// This method is used to clear out all collections and reset UI components. We'll only do this on receiving input, so we can still review the story if we wanted to.
+    /// </summary>
+    private void ResetSceneComponents()
+    {
+        foreach (var charObj in characterMapper.Values)
+        {
+            Destroy(charObj);
+        }
+
+        usedVoices.Clear();
+        characterMapper.Clear();
+
+        scrollView.SetActive(false);
+        Camera.main.transform.position = originalPos;
+        Camera.main.transform.rotation = originalOrientation;
+    }
+
+
+    private string GetUniqueVoice(List<string> voices)
+    {
+        foreach (var voice in voices)
+        {
+            if (usedVoices.Contains(voice))
+            {
+                continue;
+            }
+
+            usedVoices.Add(voice);
+            return voice;
+        }
+
+        return voices[0]; // TODO: There is a much better way of doing this.
+    }
+
+    private List<string> GetAvailableActions(List<Character> characters, string excludeCharacter)
+    {
+        var availableActions = new List<string>();
+        for (int j = 0; j < characters.Count; j++)
+        {
+            if (characters[j].name.ToLower() != excludeCharacter.ToLower())
+            {
+                availableActions.Add(Constants.MoveToAction + characters[j].name);
+            }
+        }
+
+        return availableActions;
+    }
+
+    private GameObject InstantiateCharacterPrefab(Character charInfo)
+    {
+        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(Random.Range(0, 50), Random.Range(0, 50)), Quaternion.identity);
+        var characterVoice = GetUniqueVoice(charInfo.gender == "male" ? availableVoices.male_voices : availableVoices.female_voices);
+
+        return CharacterFactory.SetUpPrimitiveCharacter(instantiatedGameObj, charInfo, characterVoice);
+    }
+    #endregion
 }

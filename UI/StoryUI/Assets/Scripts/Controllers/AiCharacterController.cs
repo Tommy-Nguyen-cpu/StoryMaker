@@ -1,16 +1,14 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System;
 using TMPro;
-using UnityEngine.Audio;
 
 public class AiCharacterController : MonoBehaviour
 {
     #region Movement Fields
     private const float speed = 3f;
     private const float rotationSpeed = 10f;
-    private const float arriveDistance = 10f;
+    private const float arriveDistance = 5f;
 
     private event Action OnArrived;
     private bool hasTarget = false;
