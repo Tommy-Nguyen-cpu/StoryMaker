@@ -2,7 +2,7 @@
 
 
 # StoryMaker
-Was inspired by CodeBullet's video where an AI directed a Rick and Morty episode. CodeBullet previously failed at creating a continuous conversation via multiple agents. This likely stems from a lack of context. For fun, I decided to tackle it myself and see how far I can go. Got a simple looking up going, and the loop works!
+Was inspired by CodeBullet's video where an AI directed a Rick and Morty episode. CodeBullet previously failed at creating a continuous conversation via multiple agents. This likely stems from a lack of context. For fun, I decided to tackle it myself and see how far I can go. Got a simple UI running, and the loop works!
 
 # Running
 In order to run the application, you must first create a python virtual environment for the server via:
