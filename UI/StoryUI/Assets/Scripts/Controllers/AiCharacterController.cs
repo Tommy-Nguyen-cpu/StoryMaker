@@ -13,6 +13,7 @@ public class AiCharacterController : MonoBehaviour
     private event Action OnArrived;
     private bool hasTarget = false;
     private Vector3 targetPosition;
+    private float cameraDistance = 10f;
     #endregion
 
     #region Name Tag Fields
@@ -92,6 +93,11 @@ public class AiCharacterController : MonoBehaviour
         Vector3 pos = transform.position;
         Vector3 next = Vector3.MoveTowards(pos, targetPosition, speed * Time.deltaTime);
         transform.position = next;
+
+
+        // Move camera to be "distance" units away from the target, in the chosen direction
+        Camera.main.transform.position = gameObject.transform.position + Vector3.back * cameraDistance;
+        Camera.main.transform.LookAt(gameObject.transform);
 
         // Rotate to face direction of movement.
         Vector3 dir = (targetPosition - pos).normalized;

@@ -50,7 +50,6 @@ public class StoryManager : MonoBehaviour
     #endregion
 
     #region Camera Parameters
-    private float cameraDistance = 10f;
     private Vector3 originalPos;
     private Quaternion originalOrientation;
     #endregion
@@ -156,10 +155,6 @@ public class StoryManager : MonoBehaviour
             // After the action (or immediately if no action) speak the response
             if (!string.IsNullOrEmpty(entry.response))
             {
-                // Move camera to be "distance" units away from the target, in the chosen direction
-                Camera.main.transform.position = sourceGameObj.transform.position + Vector3.back * cameraDistance;
-                Camera.main.transform.LookAt(sourceGameObj.transform);
-
                 scrollView.SetActive(true);
                 spokeText.text = $"{entry.character}: {entry.response}";
                 yield return StartCoroutine(sourceController.PlaySpeech(entry.response, apiManager));
@@ -277,7 +272,7 @@ public class StoryManager : MonoBehaviour
 
     private GameObject InstantiateCharacterPrefab(Character charInfo)
     {
-        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(Random.Range(0, 50), Random.Range(0, 50)), Quaternion.identity);
+        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(Random.Range(0, 50), 10, Random.Range(0, 50)), Quaternion.identity);
         var characterVoice = GetUniqueVoice(charInfo.gender == "male" ? availableVoices.male_voices : availableVoices.female_voices);
 
         return CharacterFactory.SetUpPrimitiveCharacter(instantiatedGameObj, charInfo, characterVoice);
