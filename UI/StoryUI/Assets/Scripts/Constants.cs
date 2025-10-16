@@ -8,7 +8,7 @@ public static class Constants
 
     public const int MAX_RETRY = 5;
     public const float Timeout = 10f;
-    public const int MaxConvLength = 5;
+    public const int MaxConvLength = 20;
 
     // TODO: Will add more actions later on, but "Move to" is the only action that requires a character.
     public const string MoveToAction = "Move to ";

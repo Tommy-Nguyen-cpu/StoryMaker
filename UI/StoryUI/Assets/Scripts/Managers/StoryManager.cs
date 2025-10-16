@@ -97,13 +97,18 @@ public class StoryManager : MonoBehaviour
         var characterRoleMapper = new HashSet<string>();
         for (int i = 0; i < numberOfCharacters; i++)
         {
+            loadingTextInfo.text = $"Creating ({i}/{numberOfCharacters}) unique characters...";
             var character = (await apiManager.CreateCharacter(storyPrompt, charactersSet, characterRoleMapper)).character;
-            characters.Add(character);
-            charactersSet.Add(characters[i].name);
-            characterRoleMapper.Add($"({characters[i].name}, {characters[i].role})");
-            Debug.Log($"Name: {characters[i].name}\nGender: {characters[i].gender}\nPersonality: {characters[i].personality}\nDescription: {characters[i].description}");
+            
+            if (character != null)
+            {
+                characters.Add(character);
+                charactersSet.Add(characters[i].name);
+                characterRoleMapper.Add($"({characters[i].name}, {characters[i].role})");
+                Debug.Log($"Name: {characters[i].name}\nGender: {characters[i].gender}\nPersonality: {characters[i].personality}\nDescription: {characters[i].description}");
 
-            characterMapper.Add(character.name.ToLower(), InstantiateCharacterPrefab(character));
+                characterMapper.Add(character.name.ToLower(), InstantiateCharacterPrefab(character));
+            }
         }
 
         return characters;
@@ -117,15 +122,20 @@ public class StoryManager : MonoBehaviour
         Debug.Log($"Generating {conversationLength} conversations.");
         for (int i = 0; i < conversationLength; i++)
         {
+            loadingTextInfo.text = $"Creating ({i}/{conversationLength}) conversations...";
             var randCharacterIdx = Random.Range(0, characters.Count);
             var talkingCharacter = characters[randCharacterIdx];
             var availableActions = GetAvailableActions(characters, talkingCharacter.name);
 
             var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, terrainMapper.Keys.ToList(), uniqueConvMapper.Keys.ToHashSet(), availableActions);
-            var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
-            Debug.Log(newRes + $"\nAction: {newResponse.character_response.action}");
+            
+            if (newResponse != null)
+            {
+                var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
+                Debug.Log(newRes + $"\nAction: {newResponse.character_response.action}");
 
-            uniqueConvMapper.TryAdd(newRes, newResponse.character_response);
+                uniqueConvMapper.TryAdd(newRes, newResponse.character_response);
+            }
         }
 
         return uniqueConvMapper.Values.ToList();
@@ -215,7 +225,7 @@ public class StoryManager : MonoBehaviour
             loadingTextInfo.text = "Enhancing Prompt if requested...";
             var storyPrompt = await EnhanceStoryPrompt(prompt);
 
-            loadingTextInfo.text = $"Creating {numberOfCharacters} unique characters...";
+            loadingTextInfo.text = $"Creating (0/{numberOfCharacters}) unique characters...";
             var characters = await CreateUniqueCharacters(storyPrompt);
 
             loadingTextInfo.text = "Creating character conversations...";
