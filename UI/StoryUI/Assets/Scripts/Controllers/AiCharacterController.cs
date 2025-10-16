@@ -103,21 +103,31 @@ public class AiCharacterController : MonoBehaviour
 
         // --- obstacle detection ---
         float rayDist = 1.0f; // how far ahead to check
-        bool blocked = Physics.Raycast(pos + Vector3.up * 0.5f, dir, rayDist);
+        bool blocked = Physics.Raycast(pos + Vector3.up * 0.2f, dir, rayDist);
 
         if (blocked)
         {
+            Debug.Log($"{gameObject.name} can't move forward, blocked. Will try another route.");
             // Try sidestepping
             Vector3 right = Vector3.Cross(Vector3.up, dir).normalized;
-            bool rightClear = !Physics.Raycast(pos + Vector3.up * 0.5f, right, 0.6f);
-            bool leftClear = !Physics.Raycast(pos + Vector3.up * 0.5f, -right, 0.6f);
+            bool rightClear = !Physics.Raycast(pos + Vector3.up * 0.2f, right, 0.6f);
+            bool leftClear = !Physics.Raycast(pos + Vector3.up * 0.2f, -right, 0.6f);
 
             if (rightClear)
-                dir = (dir + right * 0.7f).normalized;
+            {
+                Debug.Log($"{gameObject.name} is moving right.");
+                dir = (dir + right * 1.2f).normalized;
+            }
             else if (leftClear)
-                dir = (dir - right * 0.7f).normalized;
+            {
+                Debug.Log($"{gameObject.name} is moving left.");
+                dir = (dir - right * 1.2f).normalized;
+            }
             else
+            {
+                Debug.Log($"{gameObject.name} is blocked. Moving back a bit");
                 dir = -dir; // completely blocked, back up a bit
+            }
         }
 
         // Move and rotate
