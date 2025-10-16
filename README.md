@@ -1,10 +1,14 @@
+# StoryMaker
 <img width="1536" height="1024" alt="StoryMaker Thumbnail" src="https://github.com/user-attachments/assets/532f9e15-c487-45a4-b7b6-cf6dc4f09b8c" />
 
+## Description
+StoryMaker is an AI-powered app that creates full stories or episodes from a user prompt. Inspired by CodeBullet’s video on generating Rick & Morty episodes with AI, this was a fun side project that grew into something surprisingly entertaining.
 
-# StoryMaker
-Was inspired by CodeBullet's video where an AI directed a Rick and Morty episode. CodeBullet previously failed at creating a continuous conversation via multiple agents. This likely stems from a lack of context. For fun, I decided to tackle it myself and see how far I can go. Got a simple UI running, and the loop works!
+The backend is built in Python, handling all AI interactions and connecting with language models from HuggingFace. The Unity frontend brings everything to life—animating characters, switching scenes, and managing the visuals.
 
-# Running
+It was a blast to build, and I’ve gotten some hilarious results from it! I’ll share a link to the YouTube soon, so I hope you look forward to it!!
+
+## Running
 In order to run the application, you must first create a python virtual environment for the server via:
 ```
 python -m venv serviceEnv
