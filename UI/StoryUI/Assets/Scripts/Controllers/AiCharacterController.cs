@@ -101,12 +101,7 @@ public class AiCharacterController : MonoBehaviour
         Vector3 next = Vector3.MoveTowards(pos, targetPosition, speed * Time.deltaTime);
         transform.position = next;
 
-        var x = gameObject.transform.position.x;
-        var y = gameObject.transform.position.y + 1.5f; // Slight vertical offset so we can see the character and ground.
-        var z = gameObject.transform.position.z;
-        // Move camera to be "distance" units away from the target, in the chosen direction
-        Camera.main.transform.position =  new Vector3(x, y, z) + Vector3.forward * cameraDistance;
-        Camera.main.transform.LookAt(gameObject.transform);
+        LookAtCharacter();
 
         // Rotate to face direction of movement.
         Vector3 dir = (targetPosition - pos).normalized;
@@ -159,6 +154,16 @@ public class AiCharacterController : MonoBehaviour
     {
         yield return StartCoroutine(apiManager.SetTTS(text, CharacterVoice, audioSource));
         yield return PlaySpeech();
+    }
+
+    public void LookAtCharacter()
+    {
+        var x = gameObject.transform.position.x;
+        var y = gameObject.transform.position.y + 1.5f; // Slight vertical offset so we can see the character and ground.
+        var z = gameObject.transform.position.z;
+        // Move camera to be "distance" units away from the target, in the chosen direction
+        Camera.main.transform.position = new Vector3(x, y, z) + Vector3.forward * cameraDistance;
+        Camera.main.transform.LookAt(gameObject.transform);
     }
 
     private void RunAnimation(string animation)

@@ -58,7 +58,7 @@ public class ApiManager : MonoBehaviour
         return null;
     }
 
-    public async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, HashSet<string> conversationHistory = null, List<string> availableActions = null)
+    public async Task<GetCharacterTalkResponse> CreateCharacterTalk(string additional_notes, string story_description, string character, string personality, List<string> locations = null, HashSet<string> conversationHistory = null, List<string> availableActions = null)
     {
         var payload = new Dictionary<string, string> {
             { "additional_notes", additional_notes },
@@ -79,6 +79,12 @@ public class ApiManager : MonoBehaviour
         {
             var availableActionsString = string.Join(",", availableActions.ToArray());
             payload["available_actions"] = availableActionsString;
+        }
+
+        if (locations != null && locations.Count > 0)
+        {
+            var availableLocationsString = string.Join(",", locations.ToArray());
+            payload["available_locations"] = availableLocationsString;
         }
 
         for (int i = 0; i < Constants.MAX_RETRY; i++)

@@ -126,6 +126,8 @@ def get_character_talk(request : Dict[str, str]):
         request["personality"] = "N/A"
     if "available_actions" not in request:
         request["available_actions"] = "N/A"
+    if "available_locations" not in request:
+        request["available_locations"] = "N/A"
     if "conversation_history" not in request:
         request["conversation_history"] = "N/A"
         request["last_line"] = "N/A"
@@ -139,12 +141,13 @@ Your response must be for the character specified in the request and no other ch
 Use the conversation context specified in the context section for what has already been said.
 Provide unique responses that continue the conversation based on the context. Do not repeat or stray off-topic.
 If the character takes an action, include it in the "action" field. If no action is taken, leave the "action" field empty. Only include actions available in the "Available Actions" section.
+If the character moves to a different location, include it in the "location" field. If no movement occurs, leave the "location" field empty. Only include locations available in the "Available Locations" section.
 Your response must be in the format:
-{"character": "<character_name>", "response": "<character_response>", "action": "<character_action>" }
+{"character": "<character_name>", "response": "<character_response>", "action": "<character_action>", "location": "<location_to_move_to>" }
 
 You must strictly follow this format without any additional text or explanation.
 '''
-    prompt = f"Story Description: {request['story_description']}\n\nContext:{request['conversation_history']}\n\nPrevious line to reply to: {request["last_line"]}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nAvailable Actions: {request['available_actions']}\n\nUser Additional Notes: {request['additional_notes']}"
+    prompt = f"Story Description: {request['story_description']}\n\nContext:{request['conversation_history']}\n\nPrevious line to reply to: {request["last_line"]}\n\nCharacter: {request['character']}\n\nPersonality: {request['personality']}\n\nAvailable Actions: {request['available_actions']}\n\nAvailable Locations: {request["available_locations"]}\n\nUser Additional Notes: {request['additional_notes']}"
     character_response = llmInstance.generate_text(prompt, instructions)
 
     thinking_content, character_response = clean_ai_response(character_response)

@@ -12,3 +12,4 @@ class CharacterTalk(BaseModel):
     character: str
     response: str
     action: str
+    location: str

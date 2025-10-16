@@ -75,7 +75,7 @@ public class StoryManager : MonoBehaviour
 
         foreach(var terrain in terrainList)
         {
-            terrainMapper.Add(terrain.name, terrain);
+            terrainMapper.Add(terrain.name.ToLower(), terrain);
         }
     }
 
@@ -121,7 +121,7 @@ public class StoryManager : MonoBehaviour
             var talkingCharacter = characters[randCharacterIdx];
             var availableActions = GetAvailableActions(characters, talkingCharacter.name);
 
-            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, uniqueConvMapper.Keys.ToHashSet(), availableActions);
+            var newResponse = await apiManager.CreateCharacterTalk("Create a response that matches the characters personality and story.", storyDescription, talkingCharacter.name, talkingCharacter.personality, terrainMapper.Keys.ToList(), uniqueConvMapper.Keys.ToHashSet(), availableActions);
             var newRes = $"{newResponse.character_response.character}: {newResponse.character_response.response}";
             Debug.Log(newRes + $"\nAction: {newResponse.character_response.action}");
 
@@ -142,8 +142,31 @@ public class StoryManager : MonoBehaviour
                 continue;
             }
 
-            var sourceController = sourceGameObj.GetComponent<AiCharacterController>();
+            if (!string.IsNullOrEmpty(entry.location) && terrainMapper.TryGetValue(entry.location.ToLower(), out GameObject terrain))
+            {
+                var terrains = GameObject.FindGameObjectsWithTag("Terrain");
 
+                var atLocation = false;
+                foreach (var existingTerrain in terrains) // There should only ever be 1 terrain at a time, but just to be safe, we'll iterate.
+                {
+                    if(existingTerrain.name.Contains(entry.location, StringComparison.OrdinalIgnoreCase))
+                    {
+                        atLocation= true;
+                        Debug.Log("Already at location. Will skip!");
+                    }
+                    else
+                    {
+                        Destroy(existingTerrain);
+                    }
+                }
+
+                if(!atLocation)
+                {
+                    Instantiate(terrain);
+                }
+            }
+
+            var sourceController = sourceGameObj.GetComponent<AiCharacterController>();
             if (!string.IsNullOrEmpty(entry.action))
             {
                 var pattern = @"\bmove(?:s)?\s*to[:\-\s]*['""]?(?<target>.+?)['""]?(?=$|\s*[.!?])";
@@ -160,16 +183,6 @@ public class StoryManager : MonoBehaviour
 
                         // Wait until arrival (uses aiController.IsMoving)
                         yield return new WaitUntil(() => arrived);
-                    }
-                    else if(terrainMapper.TryGetValue(pattern.ToLower(), out GameObject terrain))
-                    {
-                        var terrains = GameObject.FindGameObjectsWithTag("Terrain");
-                        foreach(var existingTerrain in terrains) // There should only ever be 1 terrain at a time, but just to be safe, we'll iterate.
-                        {
-                            Destroy(existingTerrain);
-                        }
-
-                        Instantiate(terrain);
                     }
                     else
                     {
@@ -291,11 +304,6 @@ public class StoryManager : MonoBehaviour
             {
                 availableActions.Add(Constants.MoveToAction + characters[j].name);
             }
-        }
-
-        foreach(var terrainName in terrainMapper.Keys)
-        {
-            availableActions.Add(Constants.MoveToAction + terrainName);
         }
 
         return availableActions;
