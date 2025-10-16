@@ -6,7 +6,7 @@ StoryMaker is an AI-powered app that creates full stories or episodes from a use
 
 The backend is built in Python, handling all AI interactions and connecting with language models from HuggingFace. The Unity frontend brings everything to life—animating characters, switching scenes, and managing the visuals.
 
-It was a blast to build, and I’ve gotten some hilarious results from it! I’ll share a link to the YouTube soon, so I hope you look forward to it!!
+It was a blast to build, and I’ve gotten some hilarious results from it! I’ll share a link to the YouTube video soon, so I hope you look forward to it!!
 
 ## Running
 In order to run the application, you must first create a python virtual environment for the server via:
@@ -23,4 +23,4 @@ Lastly, start the server by running the following command:
 uvicorn Server.AI.ai_service:app --port 8000
 ```
 
-Once the server has started, we can start running our Unity app. Open the Unity application in the UI folder.
+Once the server has started, we can start running our Unity app. Open Unity Hub, select "Add Project from disk", navigate to the "UI" folder, and select the "StoryUI" folder. Now the Unity Editor should open with the project properly loaded up!
