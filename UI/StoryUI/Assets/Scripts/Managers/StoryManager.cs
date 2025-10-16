@@ -18,6 +18,11 @@ public class StoryManager : MonoBehaviour
     private HashSet<string> usedVoices = new HashSet<string>();
     private Dictionary<string, GameObject> characterMapper = new Dictionary<string, GameObject>();
 
+    private Dictionary<string, GameObject> terrainMapper = new Dictionary<string, GameObject>();
+
+    [SerializeField]
+    private List<GameObject> terrainList = new List<GameObject>();
+
     #region UI
     #region Input Prompt UIs
     [SerializeField]
@@ -67,6 +72,11 @@ public class StoryManager : MonoBehaviour
         originalPos = Camera.main.transform.position;
         originalOrientation = Camera.main.transform.rotation;
         numberOfCharacters = (int)slider.value;
+
+        foreach(var terrain in terrainList)
+        {
+            terrainMapper.Add(terrain.name, terrain);
+        }
     }
 
     private async Task<string> EnhanceStoryPrompt(string prompt)
@@ -150,6 +160,16 @@ public class StoryManager : MonoBehaviour
 
                         // Wait until arrival (uses aiController.IsMoving)
                         yield return new WaitUntil(() => arrived);
+                    }
+                    else if(terrainMapper.TryGetValue(pattern.ToLower(), out GameObject terrain))
+                    {
+                        var terrains = GameObject.FindGameObjectsWithTag("Terrain");
+                        foreach(var existingTerrain in terrains) // There should only ever be 1 terrain at a time, but just to be safe, we'll iterate.
+                        {
+                            Destroy(existingTerrain);
+                        }
+
+                        Instantiate(terrain);
                     }
                     else
                     {
@@ -273,6 +293,11 @@ public class StoryManager : MonoBehaviour
             }
         }
 
+        foreach(var terrainName in terrainMapper.Keys)
+        {
+            availableActions.Add(Constants.MoveToAction + terrainName);
+        }
+
         return availableActions;
     }
 
@@ -284,7 +309,7 @@ public class StoryManager : MonoBehaviour
             prefab = charInfo.gender == "male" ? malePrefab: femalePrefab;
         }
 
-        var instantiatedGameObj = Instantiate(prefab, new Vector3(Random.Range(0, 50), 10, Random.Range(0, 50)), Quaternion.identity);
+        var instantiatedGameObj = Instantiate(prefab, new Vector3(Random.Range(0, 20), 10, Random.Range(0, 20)), Quaternion.identity);
         var characterVoice = GetUniqueVoice(charInfo.gender == "male" ? availableVoices.male_voices : availableVoices.female_voices);
 
         return CharacterFactory.SetUpCharacter(instantiatedGameObj, charInfo, characterVoice);
