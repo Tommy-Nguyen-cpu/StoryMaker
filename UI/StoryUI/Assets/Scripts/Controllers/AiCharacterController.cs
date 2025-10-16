@@ -122,7 +122,7 @@ public class AiCharacterController : MonoBehaviour
         // Check to see if we have arrived.
         if (Vector3.Distance(transform.position, targetPosition) <= arriveDistance)
         {
-            RunAnimation("IsTalking");
+            RunAnimation(UnityEngine.Random.Range(0f, 1f) > 0.5f ? "IsTalking" : "IsDancing");
             Debug.Log("Reached target!");
             hasTarget = false;
             OnArrived?.Invoke();
