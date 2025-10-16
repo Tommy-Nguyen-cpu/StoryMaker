@@ -12,4 +12,9 @@ public static class Constants
 
     // TODO: Will add more actions later on, but "Move to" is the only action that requires a character.
     public const string MoveToAction = "Move to ";
+
+    public enum AnimationTrigger
+    {
+        IsWalking, IsTalking, IsDancing
+    }
 }

@@ -47,6 +47,12 @@ public class StoryManager : MonoBehaviour
     #region Prefabs
     [SerializeField]
     private GameObject characterPrefab;
+
+    [SerializeField]
+    private GameObject malePrefab;
+
+    [SerializeField]
+    private GameObject femalePrefab;
     #endregion
 
     #region Camera Parameters
@@ -272,10 +278,16 @@ public class StoryManager : MonoBehaviour
 
     private GameObject InstantiateCharacterPrefab(Character charInfo)
     {
-        var instantiatedGameObj = Instantiate(characterPrefab, new Vector3(Random.Range(0, 50), 10, Random.Range(0, 50)), Quaternion.identity);
+        var prefab = characterPrefab;
+        if (malePrefab != null && femalePrefab != null)
+        {
+            prefab = charInfo.gender == "male" ? malePrefab: femalePrefab;
+        }
+
+        var instantiatedGameObj = Instantiate(prefab, new Vector3(Random.Range(0, 50), 10, Random.Range(0, 50)), Quaternion.identity);
         var characterVoice = GetUniqueVoice(charInfo.gender == "male" ? availableVoices.male_voices : availableVoices.female_voices);
 
-        return CharacterFactory.SetUpPrimitiveCharacter(instantiatedGameObj, charInfo, characterVoice);
+        return CharacterFactory.SetUpCharacter(instantiatedGameObj, charInfo, characterVoice);
     }
     #endregion
 }

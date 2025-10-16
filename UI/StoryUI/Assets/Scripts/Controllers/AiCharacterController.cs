@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using System;
 using TMPro;
+using System.Linq;
 
 public class AiCharacterController : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class AiCharacterController : MonoBehaviour
     private event Action OnArrived;
     private bool hasTarget = false;
     private Vector3 targetPosition;
-    private float cameraDistance = 10f;
+    private float cameraDistance = 5f;
     #endregion
 
     #region Name Tag Fields
@@ -39,8 +40,13 @@ public class AiCharacterController : MonoBehaviour
     }
     public string CharacterVoice { get; set; }
 
+    #region Animation & Audio
     [SerializeField]
     private AudioSource audioSource;
+
+    [SerializeField]
+    private Animator characterAnimator;
+    #endregion
 
     void Awake()
     {
@@ -89,14 +95,17 @@ public class AiCharacterController : MonoBehaviour
             return;
         }
 
+        RunAnimation("IsWalking");
         // Move
         Vector3 pos = transform.position;
         Vector3 next = Vector3.MoveTowards(pos, targetPosition, speed * Time.deltaTime);
         transform.position = next;
 
-
+        var x = gameObject.transform.position.x;
+        var y = gameObject.transform.position.y + 1.5f; // Slight vertical offset so we can see the character and ground.
+        var z = gameObject.transform.position.z;
         // Move camera to be "distance" units away from the target, in the chosen direction
-        Camera.main.transform.position = gameObject.transform.position + Vector3.back * cameraDistance;
+        Camera.main.transform.position =  new Vector3(x, y, z) + Vector3.forward * cameraDistance;
         Camera.main.transform.LookAt(gameObject.transform);
 
         // Rotate to face direction of movement.
@@ -113,6 +122,7 @@ public class AiCharacterController : MonoBehaviour
         // Check to see if we have arrived.
         if (Vector3.Distance(transform.position, targetPosition) <= arriveDistance)
         {
+            RunAnimation("IsTalking");
             Debug.Log("Reached target!");
             hasTarget = false;
             OnArrived?.Invoke();
@@ -149,5 +159,25 @@ public class AiCharacterController : MonoBehaviour
     {
         yield return StartCoroutine(apiManager.SetTTS(text, CharacterVoice, audioSource));
         yield return PlaySpeech();
+    }
+
+    private void RunAnimation(string animation)
+    {
+        if(Enum.TryParse(typeof(Constants.AnimationTrigger), animation, out var trigger) && characterAnimator != null)
+        {
+            var triggeredAnimation = ((Constants.AnimationTrigger)trigger).ToString();
+            var animations = Enum.GetValues(typeof(Constants.AnimationTrigger));
+            foreach( var anim in animations)
+            {
+                bool activateAnimation = false;
+
+                if(anim.ToString().Equals(triggeredAnimation, StringComparison.OrdinalIgnoreCase))
+                {
+                    activateAnimation = true;
+                }
+
+                characterAnimator.SetBool(anim.ToString(), activateAnimation);
+            }
+        }
     }
 }
