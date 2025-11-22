@@ -23,4 +23,4 @@ Lastly, start the server by running the following command:
 uvicorn Server.AI.ai_service:app --port 8000
 ```
 
-Once the server has started, we can start running our Unity app. Open Unity Hub, select "Add Project from disk", navigate to the "UI" folder, and select the "StoryUI" folder and click on "Add Project". Now the Unity Editor should open with the project properly loaded up! Once you like on the "SampleScene" within the "Scenes" folder, you should be good to go!
+Once the server has started, we can start running our Unity app. Open Unity Hub, select "Add Project from disk", navigate to the "UI" folder, and select the "StoryUI" folder and click on "Add Project". Now the Unity Editor should open with the project properly loaded up! Once you click on the "SampleScene" within the "Scenes" folder, you should be good to go!
